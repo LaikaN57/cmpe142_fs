@@ -1,0 +1,2 @@
+obj-m := sjfs.o
+#sjfs-y := <src1>.o <src2>.o
