@@ -26,3 +26,4 @@ These are some links to different file systems that can be used for reference.
 ## Other Information
 * [How to Write Your Own Linux Kernel Module with a Simple Example](http://www.thegeekstuff.com/2013/07/write-linux-kernel-module/)
 * [theurbanpenguin - LINUX Understanding inodes](https://www.youtube.com/watch?v=_6VJ8WfWI4k)
+* [Writing a Simple File System](http://www2.comp.ufscar.br/~helio/fs/rkfs.html)
