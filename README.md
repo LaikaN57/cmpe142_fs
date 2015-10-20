@@ -11,11 +11,34 @@ Here is some authoritative information on kernel module and vfs development.
   * [Building External Modules](https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/tree/Documentation/kbuild/modules.txt)
   * [Overview of the Linux Virtual File System](https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/tree/Documentation/filesystems/vfs.txt)
 
-## Headers
+## Headers / Sources
 These are some of the core includes we will need to get our module and filesystem installed.
 * [Include](https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/tree/include)
   * [linux/module.h](https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/tree/include/linux/module.h)
   * [linux/fs.h](https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/tree/include/linux/fs.h)
+* [Library for filesystems writers (fs/libfs.c)](https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/tree/fs/libfs.c) Note: The following symbols are good to look at.
+  * 31 simple_getattr
+  * 55 simple_dentry_operations
+  * 70 simple_lookup
+  * 196 simple_dir_operations
+  * 201 simple_dir_inode_operations
+  * 264 simple_open
+  * 277 simple_link
+  * 298 simple_empty
+  * 309 simple_unlink
+  * 321 simple_rmdir
+  * 348 simple_rename
+  * 379 simple_setattr
+  * 389 simple_readpage
+  * 413 simple_write_begin
+  * 465 simple_write_end
+  * 534 simple_fill_super
+  * 604 simple_read_from_buffer
+  * 639 simple_write_to_buffer
+  * 778 simple_attr_open
+  * 785 simple_attr_release
+  * 821 simple_attr_read
+  * 854 simple_attr_write
 
 ## Example Filesystems
 These are some links to different file systems that can be used for reference.
