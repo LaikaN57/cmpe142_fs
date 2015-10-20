@@ -23,6 +23,14 @@ These are some links to different file systems that can be used for reference.
   * [RamFS](https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/tree/fs/ramfs) *Ignore the file-nommu.c
   * [SCO UnixWare Boot Filesystem (BFS)](https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/tree/fs/bfs) *Not to be confused with BeFS
 
+## Previous Semester's Work
+This is work from students in previous semesters including their references. This code cannot be trusted to work.
+* [mschneider90/cmpe142](https://github.com/mschneider90/cmpe142)
+  * https://casper.berkeley.edu/svn/trunk/roach/sw/linux/security/inode.c
+  * http://www.win.tue.nl/~aeb/linux/lk/lk-8.html
+  * http://www.tldp.org/LDP/khg/HyperNews/get/fs/vfstour.html
+  * http://lwn.net/Articles/57369/
+
 ## Other Information
 * [How to Write Your Own Linux Kernel Module with a Simple Example](http://www.thegeekstuff.com/2013/07/write-linux-kernel-module/)
 * [theurbanpenguin - LINUX Understanding inodes](https://www.youtube.com/watch?v=_6VJ8WfWI4k)

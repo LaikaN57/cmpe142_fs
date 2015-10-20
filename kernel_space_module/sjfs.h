@@ -6,4 +6,6 @@
 #include <linux/fs.h>
 #include <linux/dcache.h>
 
+#define SJFS_MAGIC	0x534A5346
+
 #endif
