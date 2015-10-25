@@ -5,6 +5,7 @@
 #include <linux/init.h>
 #include <linux/fs.h>
 #include <linux/dcache.h>
+#include <linux/pagemap.h>
 
 #define SJFS_MAGIC	0x534A5346
 
