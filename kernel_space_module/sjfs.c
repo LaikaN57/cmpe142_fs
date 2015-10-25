@@ -9,32 +9,32 @@ MODULE_AUTHOR("Onyema Ude <>");
 MODULE_DESCRIPTION("San Jose Filesystem");
 MODULE_VERSION("0:1.0.1");
 
-struct dentry * sjfs_iops_lookup(struct inode *i,struct dentry *d, unsigned int ui); { printk("sjfs_iops_lookup\n"); return NULL; }
-const char * sjfs_iops_follow_link(struct dentry *d, void **v); { printk("sjfs_iops_follow_link\n"); return NULL; }
-int sjfs_iops_permission(struct inode *i, int a); { printk("sjfs_iops_permission\n"); return NULL; }
-struct posix_acl * sjfs_iops_posix_acl(struct inode *i, int a); { printk("sjfs_iops_posix_acl\n"); return NULL; }
-int sjfs_iops_readlink(struct dentry *d, char __user *u,int i); { printk("sjfs_iops_readlink\n"); return NULL; }
-void sjfs_iops_put_link(struct inode *i, void *v); { printk("sjfs_iops_put_link\n"); }
-int sjfs_iops_create(struct inode *i,struct dentry *d, umode_t u, bool b); { printk("sjfs_iops_create\n"); return NULL; }
-int sjfs_iops_link(struct dentry *d,struct inode *i,struct dentry *d2); { printk("sjfs_iops_link\n"); return NULL; }
-int sjfs_iops_unlink(struct inode *i,struct dentry *d); { printk("sjfs_iops_unlink\n"); return NULL; }
-int sjfs_iops_symlink(struct inode *i,struct dentry *d,const char *c); { printk("sjfs_iops_symlink\n"); return NULL; }
-int sjfs_iops_mkdir(struct inode *i,struct dentry *d,umode_t u); { printk("sjfs_iops_mkdir\n"); return NULL; }
-int sjfs_iops_rmdir(struct inode *i,struct dentry *d); { printk("sjfs_iops_rmdir\n"); return NULL; }
-int sjfs_iops_mknod(struct inode *i,struct dentry *d,umode_t u,dev_t d2); { printk("sjfs_iops_mknod\n"); return NULL; }
-int sjfs_iops_rename(struct inode *i, struct dentry *d, struct inode *i2, struct dentry *d2); { printk("sjfs_iops_rename\n"); return NULL; }
-int sjfs_iops_rename2(struct inode *i, struct dentry *d, struct inode *i2, struct dentry *d2, unsigned int ui); { printk("sjfs_iops_rename2\n"); return NULL; }
-int sjfs_iops_setattr(struct dentry *d, struct iattr *i); { printk("sjfs_iops_setattr\n"); return NULL; }
-int sjfs_iops_getattr(struct vfsmount *mnt, struct dentry *, struct kstat *); { printk("sjfs_iops_getattr\n"); return NULL; }
-int sjfs_iops_setxattr(struct dentry *d, const char *c,const void *v,size_t s,int i); { printk("sjfs_iops_setxattr\n"); return NULL; }
-ssize_t sjfs_iops_getxattr(struct dentry *d, const char *c, void *v, size_t s); { printk("sjfs_iops_getxattr\n"); return NULL; }
-ssize_t sjfs_iops_listxattr(struct dentry *d, char *c, size_t s); { printk("sjfs_iops_listxattr\n"); return NULL; }
-int sjfs_iops_removexattr(struct dentry *d, const char *c); { printk("sjfs_iops_removexattr\n"); return NULL; }
-int sjfs_iops_fiemap(struct inode *i, struct fiemap_extent_info *f, u64 start, u64 len); { printk("sjfs_iops_fiemap\n"); return NULL; }
-int sjfs_iops_update_time(struct inode *i, struct timespec *t, int a); { printk("sjfs_iops_update_time\n"); return NULL; }
-int sjfs_iops_atomic_open(struct inode *i, struct dentry *d, struct file *f, unsigned open_flag, umode_t create_mode, int *opened); { printk("sjfs_iops_atomic_open\n"); return NULL; }
-int sjfs_iops_tmpfile(struct inode *i, struct dentry *d, umode_t t); { printk("sjfs_iops_tmpfile\n"); return NULL; }
-int sjfs_iops_set_acl(struct inode *i, struct posix_acl *p, int a); { printk("sjfs_iops_set_acl\n"); return NULL; }
+struct dentry * sjfs_iops_lookup(struct inode *i,struct dentry *d, unsigned int ui) { printk("sjfs_iops_lookup\n"); return NULL; }
+const char * sjfs_iops_follow_link(struct dentry *d, void **v) { printk("sjfs_iops_follow_link\n"); return NULL; }
+int sjfs_iops_permission(struct inode *i, int a) { printk("sjfs_iops_permission\n"); return NULL; }
+struct posix_acl * sjfs_iops_posix_acl(struct inode *i, int a) { printk("sjfs_iops_posix_acl\n"); return NULL; }
+int sjfs_iops_readlink(struct dentry *d, char __user *u,int i) { printk("sjfs_iops_readlink\n"); return NULL; }
+void sjfs_iops_put_link(struct inode *i, void *v) { printk("sjfs_iops_put_link\n"); }
+int sjfs_iops_create(struct inode *i,struct dentry *d, umode_t u, bool b) { printk("sjfs_iops_create\n"); return NULL; }
+int sjfs_iops_link(struct dentry *d,struct inode *i,struct dentry *d2) { printk("sjfs_iops_link\n"); return NULL; }
+int sjfs_iops_unlink(struct inode *i,struct dentry *d) { printk("sjfs_iops_unlink\n"); return NULL; }
+int sjfs_iops_symlink(struct inode *i,struct dentry *d,const char *c) { printk("sjfs_iops_symlink\n"); return NULL; }
+int sjfs_iops_mkdir(struct inode *i,struct dentry *d,umode_t u) { printk("sjfs_iops_mkdir\n"); return NULL; }
+int sjfs_iops_rmdir(struct inode *i,struct dentry *d) { printk("sjfs_iops_rmdir\n"); return NULL; }
+int sjfs_iops_mknod(struct inode *i,struct dentry *d,umode_t u,dev_t d2) { printk("sjfs_iops_mknod\n"); return NULL; }
+int sjfs_iops_rename(struct inode *i, struct dentry *d, struct inode *i2, struct dentry *d2) { printk("sjfs_iops_rename\n"); return NULL; }
+int sjfs_iops_rename2(struct inode *i, struct dentry *d, struct inode *i2, struct dentry *d2, unsigned int ui) { printk("sjfs_iops_rename2\n"); return NULL; }
+int sjfs_iops_setattr(struct dentry *d, struct iattr *i) { printk("sjfs_iops_setattr\n"); return NULL; }
+int sjfs_iops_getattr(struct vfsmount *mnt, struct dentry *, struct kstat *) { printk("sjfs_iops_getattr\n"); return NULL; }
+int sjfs_iops_setxattr(struct dentry *d, const char *c,const void *v,size_t s,int i) { printk("sjfs_iops_setxattr\n"); return NULL; }
+ssize_t sjfs_iops_getxattr(struct dentry *d, const char *c, void *v, size_t s) { printk("sjfs_iops_getxattr\n"); return NULL; }
+ssize_t sjfs_iops_listxattr(struct dentry *d, char *c, size_t s) { printk("sjfs_iops_listxattr\n"); return NULL; }
+int sjfs_iops_removexattr(struct dentry *d, const char *c) { printk("sjfs_iops_removexattr\n"); return NULL; }
+int sjfs_iops_fiemap(struct inode *i, struct fiemap_extent_info *f, u64 start, u64 len) { printk("sjfs_iops_fiemap\n"); return NULL; }
+int sjfs_iops_update_time(struct inode *i, struct timespec *t, int a) { printk("sjfs_iops_update_time\n"); return NULL; }
+int sjfs_iops_atomic_open(struct inode *i, struct dentry *d, struct file *f, unsigned open_flag, umode_t create_mode, int *opened) { printk("sjfs_iops_atomic_open\n"); return NULL; }
+int sjfs_iops_tmpfile(struct inode *i, struct dentry *d, umode_t t) { printk("sjfs_iops_tmpfile\n"); return NULL; }
+int sjfs_iops_set_acl(struct inode *i, struct posix_acl *p, int a) { printk("sjfs_iops_set_acl\n"); return NULL; }
 
 struct inode_operations sjfs_iops {
 	.lookup = sjfs_iops_lookup,
