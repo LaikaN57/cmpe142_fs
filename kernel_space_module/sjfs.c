@@ -126,6 +126,10 @@ struct file_operations sjfs_fops = {
 	//.mmap_capabilities = sjfs_fops_mmap_capabilities,
 };
 
+//sjfs_iops_permission
+//sjfs_iops_getattr
+//sjfs_iops_atomic_open
+
 // - super block level -----------------------------------------------------------------------------
 
 struct super_operations sjfs_sops = { // TODO: look up which functions we are required to fill
