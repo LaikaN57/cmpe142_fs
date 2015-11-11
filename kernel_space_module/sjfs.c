@@ -37,20 +37,20 @@ int sjfs_iops_tmpfile(struct inode *i, struct dentry *d, umode_t t) { printk("sj
 int sjfs_iops_set_acl(struct inode *i, struct posix_acl *p, int a) { printk("sjfs_iops_set_acl\n"); return 0; }
 
 struct inode_operations sjfs_iops = {
-	.lookup = sjfs_iops_lookup,
+	.lookup = sjfs_iops_lookup, // Found in github/ms version (simple)
 	//.follow_link = sjfs_iops_follow_link,
 	.permission = sjfs_iops_permission,
 	//.posix_acl = sjfs_iops_posix_acl,
 	.readlink = sjfs_iops_readlink,
 	//.put_link = sjfs_iops_put_link,
-	.create = sjfs_iops_create,
-	.link = sjfs_iops_link,
-	.unlink = sjfs_iops_unlink,
+	.create = sjfs_iops_create, // Found in github/ms version
+	.link = sjfs_iops_link, // Found in github/ms version (simple)
+	.unlink = sjfs_iops_unlink, // Found in github/ms version (simple)
 	.symlink = sjfs_iops_symlink,
 	.mkdir = sjfs_iops_mkdir,
 	.rmdir = sjfs_iops_rmdir,
-	.mknod = sjfs_iops_mknod,
-	.rename = sjfs_iops_rename,
+	.mknod = sjfs_iops_mknod, // Found in github/ms version
+	.rename = sjfs_iops_rename, // Found in github/ms version (simple)
 	.rename2 = sjfs_iops_rename2,
 	.setattr = sjfs_iops_setattr,
 	.getattr = sjfs_iops_getattr,
@@ -97,8 +97,8 @@ unsigned sjfs_fops_mmap_capabilities(struct file *f) { printk("sjfs_fops_mmap_ca
 struct file_operations sjfs_fops = {
 	.owner = THIS_MODULE,
 	.llseek = sjfs_fops_llseek,
-	.read = sjfs_fops_read,
-	.write = sjfs_fops_write,
+	.read = sjfs_fops_read, // Found in github/ms version
+	.write = sjfs_fops_write, // Found in github/ms version
 	.read_iter = sjfs_fops_read_iter,
 	.write_iter = sjfs_fops_write_iter,
 	.iterate = sjfs_fops_iterate,
@@ -107,7 +107,7 @@ struct file_operations sjfs_fops = {
 	.compat_ioctl = sjfs_fops_compat_ioctl,
 	.mmap = sjfs_fops_mmap,
 	//.mremap = sjfs_fops_mremap,
-	.open = sjfs_fops_open,
+	.open = sjfs_fops_open, // Found in github/ms version
 	.flush = sjfs_fops_flush,
 	.release = sjfs_fops_release,
 	.fsync = sjfs_fops_fsync,
