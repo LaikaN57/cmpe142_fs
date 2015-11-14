@@ -183,6 +183,7 @@ int sjfs_fill_super(struct super_block *sb, void *data, int silent) {
 	struct inode *inode;
 	struct dentry *root;
 
+	sb->s_maxbytes = MAX_LFS_FILESIZE;
 	sb->s_blocksize = PAGE_CACHE_SIZE;
 	sb->s_blocksize_bits = PAGE_CACHE_SHIFT;
 	sb->s_magic = SJFS_MAGIC;
@@ -239,6 +240,11 @@ struct file_system_type sjfs_fs_type = {
 // - module level ----------------------------------------------------------------------------------
 
 int __init_or_module sjfs_init(void) {
+	static unsigned long once;
+
+	if (test_and_set_bit(0, &once))
+		return -EBUSY;
+
 	// register the filesystem
 	return register_filesystem(&sjfs_fs_type);
 }
