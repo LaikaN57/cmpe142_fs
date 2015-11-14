@@ -47,7 +47,11 @@ ssize_t sjfs_iops_listxattr(struct dentry *dentry, char *list, size_t size) { pr
 int sjfs_iops_removexattr(struct dentry *dentry, const char *name) { printk("sjfs_iops_removexattr\n"); return 0; }
 int sjfs_iops_fiemap(struct inode *i, struct fiemap_extent_info *f, u64 start, u64 len) { printk("sjfs_iops_fiemap\n"); return 0; }
 int sjfs_iops_update_time(struct inode *i, struct timespec *t, int a) { printk("sjfs_iops_update_time\n"); return 0; }
-int sjfs_iops_atomic_open(struct inode *i, struct dentry *d, struct file *f, unsigned open_flag, umode_t create_mode, int *opened) { printk("sjfs_iops_atomic_open\n"); return 0; }
+int sjfs_iops_atomic_open(struct inode *dir, struct dentry *dentry, struct file *file, unsigned open_flag, umode_t create_mode, int *opened) {
+	printk("sjfs_iops_atomic_open(i=%lu, d=\"%s\", of=%#010x, cm=%#06x, o=%#010x)\n", dir->i_ino, (&(dentry->d_name))->name, open_flag, create_mode, *opened);
+
+	return 0;
+}
 int sjfs_iops_tmpfile(struct inode *i, struct dentry *d, umode_t t) { printk("sjfs_iops_tmpfile\n"); return 0; }
 int sjfs_iops_set_acl(struct inode *i, struct posix_acl *p, int a) { printk("sjfs_iops_set_acl\n"); return 0; }
 
@@ -142,7 +146,33 @@ struct file_operations sjfs_fops = {
 };
 
 // - super block level -----------------------------------------------------------------------------
-
+/*
+struct inode *sjfs_sops_alloc_inode(struct super_block *sb) { printk("sjfs_sops_alloc_inode\n"); return NULL; };
+void sjfs_sops_destroy_inode(struct inode *i) { printk("sjfs_sops_destroy_inode\n"); return; };
+void sjfs_sops_dirty_inode(struct inode *i, int flags) { printk("sjfs_sops_dirty_inode\n"); return; };
+int sjfs_sops_write_inode(struct inode *i, struct writeback_control *wbc) { printk("sjfs_sops_write_inode\n"); return 0; };
+int sjfs_sops_drop_inode(struct inode *i) { printk("sjfs_sops_drop_inode\n"); return 0; };
+void sjfs_sops_evict_inode(struct inode *i) { printk("sjfs_sops_evict_inode\n"); return; };
+void sjfs_sops_put_super(struct super_block *sb) { printk("sjfs_sops_put_super\n"); return; };
+int sjfs_sops_sync_fs(struct super_block *sb, int wait) { printk("sjfs_sops_sync_fs\n"); return 0; };
+int sjfs_sops_freeze_super(struct super_block *sb) { printk("sjfs_sops_freeze_super\n"); return 0; };
+int sjfs_sops_freeze_fs(struct super_block *sb) { printk("sjfs_sops_freeze_fs\n"); return 0; };
+int sjfs_sops_thaw_super(struct super_block *sb) { printk("sjfs_sops_thaw_super\n"); return 0; };
+int sjfs_sops_unfreeze_fs(struct super_block *sb) { printk("sjfs_sops_unfreeze_fs\n"); return 0; };
+int sjfs_sops_statfs(struct dentry *d, struct kstatfs *s) { printk("sjfs_sops_statfs\n"); return 0; };
+int sjfs_sops_remount_fs(struct super_block *sb, int *i, char *c) { printk("sjfs_sops_remount_fs\n"); return 0; };
+void sjfs_sops_umount_begin(struct super_block *sb) { printk("sjfs_sops_umount_begin\n"); return; };
+int sjfs_sops_show_options(struct seq_file *s, struct dentry *d) { printk("sjfs_sops_show_options\n"); return 0; };
+int sjfs_sops_show_devname(struct seq_file *s, struct dentry *d) { printk("sjfs_sops_show_devname\n"); return 0; };
+int sjfs_sops_show_path(struct seq_file *s, struct dentry *d) { printk("sjfs_sops_show_path\n"); return 0; };
+int sjfs_sops_show_stats(struct seq_file *s, struct dentry *d) { printk("sjfs_sops_show_stats\n"); return 0; };
+ssize_t sjfs_sops_quota_read(struct super_block *sb, int i, char *c, size_t s, loff_t l) { printk("sjfs_sops_quota_read\n"); return 0; };
+ssize_t sjfs_sops_quota_write(struct super_block *sb, int i, const char *c, size_t s, loff_t l) { printk("sjfs_sops_quota_write\n"); return 0; };
+struct dquot **sjfs_sops_get_dquots(struct inode *i) { printk("sjfs_sops_get_dquots\n"); return NULL; };
+int sjfs_sops_bdev_try_to_free_page(struct super_block*sb, struct page* p, gfp_t g) { printk("sjfs_sops_bdev_try_to_free_page\n"); return 0; };
+long sjfs_sops_nr_cached_objects(struct super_block *sb, struct shrink_control *sc) { printk("sjfs_sops_nr_cached_objects\n"); return 0; };
+long sjfs_sops_free_cached_objects(struct super_block *sb, struct shrink_control *sc) { printk("sjfs_sops_free_cached_objects\n"); return 0; };
+*/
 struct super_operations sjfs_sops = { // TODO: look up which functions we are required to fill
 	.drop_inode		= generic_delete_inode,
 	.statfs			= simple_statfs,
@@ -166,7 +196,7 @@ int sjfs_fill_super(struct super_block *sb, void *data, int silent) {
 		return -ENOMEM;
 
 	inode->i_ino = 1;
-	inode->i_mode = S_IFDIR | 0755;
+	inode->i_mode = S_IFDIR | S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH; // octal bitmask of file type and permissions 040755
 	inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
 	inode->i_op = &sjfs_iops;
 	inode->i_fop = &sjfs_fops;
