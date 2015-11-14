@@ -37,10 +37,10 @@ int sjfs_iops_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat 
 	// simply copies inode data to stat data
 	return simple_getattr(mnt, dentry, stat);
 }
-int sjfs_iops_setxattr(struct dentry *d, const char *c,const void *v,size_t s,int i) { printk("sjfs_iops_setxattr\n"); return 0; }
-ssize_t sjfs_iops_getxattr(struct dentry *d, const char *c, void *v, size_t s) { printk("sjfs_iops_getxattr\n"); return 0; }
-ssize_t sjfs_iops_listxattr(struct dentry *d, char *c, size_t s) { printk("sjfs_iops_listxattr\n"); return 0; }
-int sjfs_iops_removexattr(struct dentry *d, const char *c) { printk("sjfs_iops_removexattr\n"); return 0; }
+int sjfs_iops_setxattr(struct dentry *dentry, const char *name,const void *value, size_t size, int flags) { printk("sjfs_iops_setxattr\n"); return 0; }
+ssize_t sjfs_iops_getxattr(struct dentry *dentry, const char *name, void *value, size_t size) { printk("sjfs_iops_getxattr\n"); return 0; }
+ssize_t sjfs_iops_listxattr(struct dentry *dentry, char *list, size_t size) { printk("sjfs_iops_listxattr\n"); return 0; }
+int sjfs_iops_removexattr(struct dentry *dentry, const char *name) { printk("sjfs_iops_removexattr\n"); return 0; }
 int sjfs_iops_fiemap(struct inode *i, struct fiemap_extent_info *f, u64 start, u64 len) { printk("sjfs_iops_fiemap\n"); return 0; }
 int sjfs_iops_update_time(struct inode *i, struct timespec *t, int a) { printk("sjfs_iops_update_time\n"); return 0; }
 int sjfs_iops_atomic_open(struct inode *i, struct dentry *d, struct file *f, unsigned open_flag, umode_t create_mode, int *opened) { printk("sjfs_iops_atomic_open\n"); return 0; }
