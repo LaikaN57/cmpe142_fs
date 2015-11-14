@@ -11,7 +11,11 @@ MODULE_VERSION("0:1.0.1");
 
 struct dentry * sjfs_iops_lookup(struct inode *i,struct dentry *d, unsigned int ui) { printk("sjfs_iops_lookup\n"); return NULL; }
 const char * sjfs_iops_follow_link(struct dentry *d, void **v) { printk("sjfs_iops_follow_link\n"); return NULL; }
-int sjfs_iops_permission(struct inode *i, int a) { printk("sjfs_iops_permission\n"); return 0; }
+int sjfs_iops_permission(struct inode *inode, int mask) {
+	printk("sjfs_iops_permission -> generic_permission(i=%lu, m=%#010x)\n", inode->i_ino, mask);
+	
+	return generic_permission(inode, mask);
+}
 struct posix_acl * sjfs_iops_posix_acl(struct inode *i, int a) { printk("sjfs_iops_posix_acl\n"); return NULL; }
 int sjfs_iops_readlink(struct dentry *d, char __user *u,int i) { printk("sjfs_iops_readlink\n"); return 0; }
 void sjfs_iops_put_link(struct inode *i, void *v) { printk("sjfs_iops_put_link\n"); }
