@@ -1,0 +1,2 @@
+obj-m += ramfs2.o
+
