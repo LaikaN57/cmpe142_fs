@@ -24,11 +24,22 @@ int sjfs_iops_rmdir(struct inode *i,struct dentry *d) { printk("sjfs_iops_rmdir\
 int sjfs_iops_mknod(struct inode *i,struct dentry *d,umode_t u,dev_t d2) { printk("sjfs_iops_mknod\n"); return 0; }
 int sjfs_iops_rename(struct inode *i, struct dentry *d, struct inode *i2, struct dentry *d2) { printk("sjfs_iops_rename\n"); return 0; }
 int sjfs_iops_rename2(struct inode *i, struct dentry *d, struct inode *i2, struct dentry *d2, unsigned int ui) { printk("sjfs_iops_rename2\n"); return 0; }
-int sjfs_iops_setattr(struct dentry *d, struct iattr *i) { printk("sjfs_iops_setattr\n"); return 0; }
-int sjfs_iops_getattr(struct vfsmount *mnt, struct dentry *d, struct kstat *k) { printk("sjfs_iops_getattr\n"); return 0; }
+int sjfs_iops_setattr(struct dentry *dentry, struct iattr *iattr) {
+	printk("sjfs_iops_setattr -> simple_setattr (for testing only)\n");
+
+	// TODO: rewrite this to save the attributes back to user space
+	return simple_setattr(dentry, iattr);
+}
+int sjfs_iops_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *stat) {
+	printk("sjfs_iops_getattr -> simple_getattr\n");
+
+	// enentually calls generic_fillattr() in fs/stat.c
+	// simply copies inode data to stat data
+	return simple_getattr(mnt, dentry, stat);
+}
 int sjfs_iops_setxattr(struct dentry *d, const char *c,const void *v,size_t s,int i) { printk("sjfs_iops_setxattr\n"); return 0; }
-ssize_t sjfs_iops_getxattr(struct dentry *d, const char *c, void *v, size_t s) { printk("sjfs_iops_getxattr\n"); return NULL; }
-ssize_t sjfs_iops_listxattr(struct dentry *d, char *c, size_t s) { printk("sjfs_iops_listxattr\n"); return NULL; }
+ssize_t sjfs_iops_getxattr(struct dentry *d, const char *c, void *v, size_t s) { printk("sjfs_iops_getxattr\n"); return 0; }
+ssize_t sjfs_iops_listxattr(struct dentry *d, char *c, size_t s) { printk("sjfs_iops_listxattr\n"); return 0; }
 int sjfs_iops_removexattr(struct dentry *d, const char *c) { printk("sjfs_iops_removexattr\n"); return 0; }
 int sjfs_iops_fiemap(struct inode *i, struct fiemap_extent_info *f, u64 start, u64 len) { printk("sjfs_iops_fiemap\n"); return 0; }
 int sjfs_iops_update_time(struct inode *i, struct timespec *t, int a) { printk("sjfs_iops_update_time\n"); return 0; }
@@ -52,8 +63,8 @@ struct inode_operations sjfs_iops = {
 	.mknod = sjfs_iops_mknod, // Found in github/ms version
 	.rename = sjfs_iops_rename, // Found in github/ms version (simple)
 	.rename2 = sjfs_iops_rename2,
-	.setattr = sjfs_iops_setattr,
-	.getattr = sjfs_iops_getattr,
+	.setattr = sjfs_iops_setattr, // simple (need to rewrite, see todo comment in def)
+	.getattr = sjfs_iops_getattr, // simple
 	.setxattr = sjfs_iops_setxattr,
 	.getxattr = sjfs_iops_getxattr,
 	.listxattr = sjfs_iops_listxattr,
@@ -65,11 +76,11 @@ struct inode_operations sjfs_iops = {
 	.set_acl = sjfs_iops_set_acl,
 };
 
-loff_t sjfs_fops_llseek(struct file *f, loff_t l, int i) { printk("sjfs_fops_llseek\n"); return NULL; }
-ssize_t sjfs_fops_read(struct file *f, char __user *u, size_t s, loff_t *l) { printk("sjfs_fops_read\n"); return NULL; }
-ssize_t sjfs_fops_write(struct file *f, const char __user *u, size_t s, loff_t *l) { printk("sjfs_fops_write\n"); return NULL; }
-ssize_t sjfs_fops_read_iter(struct kiocb *k, struct iov_iter *i) { printk("sjfs_fops_read_iter\n"); return NULL; }
-ssize_t sjfs_fops_write_iter(struct kiocb *k, struct iov_iter *i) { printk("sjfs_fops_write_iter\n"); return NULL; }
+loff_t sjfs_fops_llseek(struct file *f, loff_t l, int i) { printk("sjfs_fops_llseek\n"); return 0; }
+ssize_t sjfs_fops_read(struct file *f, char __user *u, size_t s, loff_t *l) { printk("sjfs_fops_read\n"); return 0; }
+ssize_t sjfs_fops_write(struct file *f, const char __user *u, size_t s, loff_t *l) { printk("sjfs_fops_write\n"); return 0; }
+ssize_t sjfs_fops_read_iter(struct kiocb *k, struct iov_iter *i) { printk("sjfs_fops_read_iter\n"); return 0; }
+ssize_t sjfs_fops_write_iter(struct kiocb *k, struct iov_iter *i) { printk("sjfs_fops_write_iter\n"); return 0; }
 int sjfs_fops_iterate(struct file *f, struct dir_context *d) { printk("sjfs_fops_iterate\n"); return 0; }
 unsigned int sjfs_fops_poll(struct file *f, struct poll_table_struct *p) { printk("sjfs_fops_poll\n"); return 0; }
 long sjfs_fops_unlocked_ioctl(struct file *f, unsigned int ui, unsigned long ul) { printk("sjfs_fops_unlocked_ioctl\n"); return 0; }
@@ -83,12 +94,12 @@ int sjfs_fops_fsync(struct file *f, loff_t l, loff_t l2, int datasync) { printk(
 int sjfs_fops_aio_fsync(struct kiocb *k, int datasync) { printk("sjfs_fops_aio_fsync\n"); return 0; }
 int sjfs_fops_fasync(int i, struct file *f, int i2) { printk("sjfs_fops_fasync\n"); return 0; }
 int sjfs_fops_lock(struct file *f, int i, struct file_lock *fl) { printk("sjfs_fops_lock\n"); return 0; }
-ssize_t sjfs_fops_sendpage(struct file *f, struct page *p, int i, size_t s, loff_t *l, int i2) { printk("sjfs_fops_sendpage\n"); return NULL; }
+ssize_t sjfs_fops_sendpage(struct file *f, struct page *p, int i, size_t s, loff_t *l, int i2) { printk("sjfs_fops_sendpage\n"); return 0; }
 unsigned long sjfs_fops_get_unmapped_area(struct file *f, unsigned long ul, unsigned long ul2, unsigned long ul3, unsigned long ul4) { printk("sjfs_fops_get_unmapped_area\n"); return 0; }
 int sjfs_fops_check_flags(int i) { printk("sjfs_fops_check_flags\n"); return 0; }
 int sjfs_fops_flock(struct file *f, int i, struct file_lock *fl) { printk("sjfs_fops_flock\n"); return 0; }
-ssize_t sjfs_fops_splice_write(struct pipe_inode_info *p, struct file *f, loff_t *l, size_t s, unsigned int ui) { printk("sjfs_fops_splice_write\n"); return NULL; }
-ssize_t sjfs_fops_splice_read(struct file *f, loff_t *l, struct pipe_inode_info *p, size_t s, unsigned int ui) { printk("sjfs_fops_splice_read\n"); return NULL; }
+ssize_t sjfs_fops_splice_write(struct pipe_inode_info *p, struct file *f, loff_t *l, size_t s, unsigned int ui) { printk("sjfs_fops_splice_write\n"); return 0; }
+ssize_t sjfs_fops_splice_read(struct file *f, loff_t *l, struct pipe_inode_info *p, size_t s, unsigned int ui) { printk("sjfs_fops_splice_read\n"); return 0; }
 int sjfs_fops_setlease(struct file *f, long l, struct file_lock **fl, void **v) { printk("sjfs_fops_setlease\n"); return 0; }
 long sjfs_fops_fallocate(struct file *file, int mode, loff_t offset, loff_t len) { printk("sjfs_fops_fallocate\n"); return 0; }
 void sjfs_fops_show_fdinfo(struct seq_file *m, struct file *f) { printk("sjfs_fops_show_fdinfo\n"); }
@@ -97,8 +108,8 @@ unsigned sjfs_fops_mmap_capabilities(struct file *f) { printk("sjfs_fops_mmap_ca
 struct file_operations sjfs_fops = {
 	.owner = THIS_MODULE,
 	.llseek = sjfs_fops_llseek,
-	.read = sjfs_fops_read, // Found in github/ms version
-	.write = sjfs_fops_write, // Found in github/ms version
+	.read = sjfs_fops_read, // Found in both github versions
+	.write = sjfs_fops_write, // Found in both github versions
 	.read_iter = sjfs_fops_read_iter,
 	.write_iter = sjfs_fops_write_iter,
 	.iterate = sjfs_fops_iterate,
@@ -107,10 +118,10 @@ struct file_operations sjfs_fops = {
 	.compat_ioctl = sjfs_fops_compat_ioctl,
 	.mmap = sjfs_fops_mmap,
 	//.mremap = sjfs_fops_mremap,
-	.open = sjfs_fops_open, // Found in github/ms version
+	.open = sjfs_fops_open, // Found in both github versions
 	.flush = sjfs_fops_flush,
 	.release = sjfs_fops_release,
-	.fsync = sjfs_fops_fsync,
+	.fsync = sjfs_fops_fsync, // Found in github/tf version (noop)
 	.aio_fsync = sjfs_fops_aio_fsync,
 	.fasync = sjfs_fops_fasync,
 	.lock = sjfs_fops_lock,
@@ -125,10 +136,6 @@ struct file_operations sjfs_fops = {
 	.show_fdinfo = sjfs_fops_show_fdinfo,
 	//.mmap_capabilities = sjfs_fops_mmap_capabilities,
 };
-
-//sjfs_iops_permission
-//sjfs_iops_getattr
-//sjfs_iops_atomic_open
 
 // - super block level -----------------------------------------------------------------------------
 
@@ -157,8 +164,8 @@ int sjfs_fill_super(struct super_block *sb, void *data, int silent) {
 	inode->i_ino = 1;
 	inode->i_mode = S_IFDIR | 0755;
 	inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
-	inode->i_op = &sjfs_iops; // simple_dir_inode_operations
-	inode->i_fop = &sjfs_fops; // simple_dir_operations
+	inode->i_op = &sjfs_iops;
+	inode->i_fop = &sjfs_fops;
 
 	set_nlink(inode, 2);
 
