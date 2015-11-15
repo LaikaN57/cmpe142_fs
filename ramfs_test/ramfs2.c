@@ -25,7 +25,36 @@ MODULE_AUTHOR("Onyema Ude <>");
 MODULE_DESCRIPTION("San Jose Filesystem");
 MODULE_VERSION("0:1.1.1");
 
-const struct file_operations ramfs2_file_operations = {
+ssize_t sjfs_fops_read_iter(struct kiocb *k, struct iov_iter *i) {
+	printk("sjfs_fops_read_iter\n");
+	return generic_file_read_iter(k, i);
+}
+ssize_t sjfs_fops_write_iter(struct kiocb *k, struct iov_iter *i) {
+	printk("sjfs_fops_write_iter\n");
+	return generic_file_write_iter(k, i);
+}
+int sjfs_fops_mmap(struct file *f, struct vm_area_struct *v) {
+	printk("sjfs_fops_mmap\n");
+	return generic_file_mmap(f, v);
+}
+int sjfs_fops_fsync(struct file *f, loff_t l, loff_t l2, int datasync) {
+	printk("sjfs_fops_fsync\n");
+	return noop_fsync(f, l, l2, datasync);
+}
+ssize_t sjfs_fops_splice_read(struct file *f, loff_t *l, struct pipe_inode_info *p, size_t s, unsigned int ui) {
+	printk("sjfs_fops_splice_read\n");
+	return generic_file_splice_read(f, l, p, s, ui);
+}
+ssize_t sjfs_fops_splice_write(struct pipe_inode_info *p, struct file *f, loff_t *l, size_t s, unsigned int ui) {
+	printk("sjfs_fops_splice_write\n");
+	return iter_file_splice_write(p, f, l, s, ui);
+}
+loff_t sjfs_fops_llseek(struct file *f, loff_t l, int i) {
+	printk("sjfs_fops_llseek\n");
+	return generic_file_llseek(f, l, i);
+}
+
+const struct file_operations sjfs_file_operations = {
         .read_iter      = generic_file_read_iter,
         .write_iter     = generic_file_write_iter,
         .mmap           = generic_file_mmap,
@@ -35,12 +64,26 @@ const struct file_operations ramfs2_file_operations = {
         .llseek         = generic_file_llseek,
 };
 
-const struct inode_operations ramfs2_file_inode_operations = {
-        .setattr        = simple_setattr,
-        .getattr        = simple_getattr,
+int sjfs_file_iops_setattr(struct dentry *dentry, struct iattr *iattr) {
+	printk("sjfs_file_iops_setattr -> simple_setattr (for testing only)\n");
+
+	// TODO: rewrite this to save the attributes back to user space
+	return simple_setattr(dentry, iattr);
+}
+int sjfs_file_iops_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *stat) {
+	printk("sjfs_file_iops_getattr -> simple_getattr\n");
+
+	// enentually calls generic_fillattr() in fs/stat.c
+	// simply copies inode data to stat data
+	return simple_getattr(mnt, dentry, stat);
+}
+
+const struct inode_operations sjfs_file_inode_operations = {
+        .setattr        = sjfs_file_iops_setattr,
+        .getattr        = sjfs_file_iops_getattr,
 };
 
-static const struct inode_operations ramfs2_dir_inode_operations; // circ dep
+static const struct inode_operations sjfs_dir_inode_operations; // circ dep
 
 static const struct address_space_operations ramfs2_aops = {
 	.readpage	= simple_readpage,
@@ -74,13 +117,13 @@ struct inode *ramfs2_get_inode(struct super_block *sb, const struct inode *dir, 
 				break;
 			
 			case S_IFREG:
-				inode->i_op = &ramfs2_file_inode_operations;
-				inode->i_fop = &ramfs2_file_operations;
+				inode->i_op = &sjfs_file_inode_operations;
+				inode->i_fop = &sjfs_file_operations;
 				
 				break;
 			
 			case S_IFDIR:
-				inode->i_op = &ramfs2_dir_inode_operations;
+				inode->i_op = &sjfs_dir_inode_operations;
 				inode->i_fop = &simple_dir_operations;
 				
 				inc_nlink(inode); // directory inodes start off with i_nlink == 2 (for "." entry)
@@ -164,16 +207,55 @@ static int ramfs2_symlink(struct inode * dir, struct dentry *dentry, const char 
 }
 */
 
-static const struct inode_operations ramfs2_dir_inode_operations = {
-	.create		= ramfs2_create,
-	.lookup		= simple_lookup,
-	.link		= simple_link,
-	.unlink		= simple_unlink,
-	//.symlink	= ramfs2_symlink,
-	.mkdir		= ramfs2_mkdir,
-	.rmdir		= simple_rmdir,
-	.mknod		= ramfs2_mknod,
-	.rename		= simple_rename,
+int sjfs_dir_iops_create(struct inode *i,struct dentry *d, umode_t u, bool b) {
+	printk("sjfs_dir_iops_create -> ramfs2_create\n");
+	return ramfs2_create(i, d, u, b);
+}
+struct dentry * sjfs_dir_iops_lookup(struct inode *i,struct dentry *d, unsigned int ui) {
+	printk("sjfs_dir_iops_lookup -> simple_lookup\n");
+	return simple_lookup(i, d, ui);
+}
+int sjfs_dir_iops_link(struct dentry *d,struct inode *i,struct dentry *d2) {
+	printk("sjfs_dir_iops_link -> simple_link\n");
+	return simple_link(d, i, d2);
+}
+int sjfs_dir_iops_unlink(struct inode *i,struct dentry *d) {
+	printk("sjfs_dir_iops_unlink -> simple_unlink\n");
+	return simple_unlink(i, d);
+}
+/*
+int sjfs_dir_iops_symlink(struct inode *i,struct dentry *d,const char *c) {
+	printk("sjfs_dir_iops_symlink -> ramfs2_symlink\n");
+	return ramfs2_symlink(i, d, c);
+}
+*/
+int sjfs_dir_iops_mkdir(struct inode *i,struct dentry *d,umode_t u) {
+	printk("sjfs_dir_iops_mkdir -> ramfs2_mkdir\n");
+	return ramfs2_mkdir(i, d, u);
+}
+int sjfs_dir_iops_rmdir(struct inode *i,struct dentry *d) {
+	printk("sjfs_dir_iops_rmdir -> simple_rmdir\n");
+	return simple_rmdir(i, d);
+}
+int sjfs_dir_iops_mknod(struct inode *i,struct dentry *d,umode_t u,dev_t d2) {
+	printk("sjfs_dir_iops_mknod -> ramfs2_mknod\n");
+	return ramfs2_mknod(i, d, u, d2);
+}
+int sjfs_dir_iops_rename(struct inode *i, struct dentry *d, struct inode *i2, struct dentry *d2) {
+	printk("sjfs_dir_iops_rename -> simple_rename\n");
+	return simple_rename(i, d, i2, d2);
+}
+
+static const struct inode_operations sjfs_dir_inode_operations = {
+	.create		= sjfs_dir_iops_create,
+	.lookup		= sjfs_dir_iops_lookup,
+	.link		= sjfs_dir_iops_link,
+	.unlink		= sjfs_dir_iops_unlink,
+	//.symlink	= sjfs_dir_iops_symlink,
+	.mkdir		= sjfs_dir_iops_mkdir,
+	.rmdir		= sjfs_dir_iops_rmdir,
+	.mknod		= sjfs_dir_iops_mknod,
+	.rename		= sjfs_dir_iops_rename,
 };
 
 // - super block level -----------------------------------------------------------------------------
