@@ -26,42 +26,42 @@ MODULE_DESCRIPTION("San Jose Filesystem");
 MODULE_VERSION("0:1.1.1");
 
 ssize_t sjfs_fops_read_iter(struct kiocb *k, struct iov_iter *i) {
-	printk("sjfs_fops_read_iter\n");
+	printk("sjfs_fops_read_iter -> generic_file_read_iter\n");
 	return generic_file_read_iter(k, i);
 }
 ssize_t sjfs_fops_write_iter(struct kiocb *k, struct iov_iter *i) {
-	printk("sjfs_fops_write_iter\n");
+	printk("sjfs_fops_write_iter -> generic_file_write_iter\n");
 	return generic_file_write_iter(k, i);
 }
 int sjfs_fops_mmap(struct file *f, struct vm_area_struct *v) {
-	printk("sjfs_fops_mmap\n");
+	printk("sjfs_fops_mmap -> generic_file_mmap\n");
 	return generic_file_mmap(f, v);
 }
 int sjfs_fops_fsync(struct file *f, loff_t l, loff_t l2, int datasync) {
-	printk("sjfs_fops_fsync\n");
+	printk("sjfs_fops_fsync -> noop_fsync\n");
 	return noop_fsync(f, l, l2, datasync);
 }
 ssize_t sjfs_fops_splice_read(struct file *f, loff_t *l, struct pipe_inode_info *p, size_t s, unsigned int ui) {
-	printk("sjfs_fops_splice_read\n");
+	printk("sjfs_fops_splice_read -> generic_file_splice_read\n");
 	return generic_file_splice_read(f, l, p, s, ui);
 }
 ssize_t sjfs_fops_splice_write(struct pipe_inode_info *p, struct file *f, loff_t *l, size_t s, unsigned int ui) {
-	printk("sjfs_fops_splice_write\n");
+	printk("sjfs_fops_splice_write -> iter_file_splice_write\n");
 	return iter_file_splice_write(p, f, l, s, ui);
 }
 loff_t sjfs_fops_llseek(struct file *f, loff_t l, int i) {
-	printk("sjfs_fops_llseek\n");
+	printk("sjfs_fops_llseek -> generic_file_llseek\n");
 	return generic_file_llseek(f, l, i);
 }
 
 const struct file_operations sjfs_file_operations = {
-        .read_iter      = generic_file_read_iter,
-        .write_iter     = generic_file_write_iter,
-        .mmap           = generic_file_mmap,
-        .fsync          = noop_fsync,
-        .splice_read    = generic_file_splice_read,
-        .splice_write   = iter_file_splice_write,
-        .llseek         = generic_file_llseek,
+        .read_iter      = sjfs_fops_read_iter,
+        .write_iter     = sjfs_fops_write_iter,
+        .mmap           = sjfs_fops_mmap,
+        .fsync          = sjfs_fops_fsync,
+        .splice_read    = sjfs_fops_splice_read,
+        .splice_write   = sjfs_fops_splice_write,
+        .llseek         = sjfs_fops_llseek,
 };
 
 int sjfs_file_iops_setattr(struct dentry *dentry, struct iattr *iattr) {
