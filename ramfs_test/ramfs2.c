@@ -85,10 +85,26 @@ const struct inode_operations sjfs_file_inode_operations = {
 
 static const struct inode_operations sjfs_dir_inode_operations; // circ dep
 
+int sjfs_aops_readpage(struct file *f, struct page *p) {
+	printk("sjfs_aops_readpage -> simple_readpage\n");
+	
+	return simple_readpage(f, p);
+}
+int sjfs_aops_write_begin(struct file *f, struct address_space *mapping, loff_t pos, unsigned len, unsigned flags, struct page **pagep, void **fsdata) {
+	printk("sjfs_aops_write_begin -> simple_write_begin\n");
+	
+	return simple_write_begin(f, mapping, pos, len, flags, pagep, fsdata);
+}
+int sjfs_aops_write_end(struct file *f, struct address_space *mapping, loff_t pos, unsigned len, unsigned copied, struct page *page, void *fsdata) {
+	printk("sjfs_aops_write_end -> simple_write_end\n");
+	
+	return simple_write_end(f, mapping, pos, len, copied, page, fsdata);
+}
+
 static const struct address_space_operations ramfs2_aops = {
-	.readpage	= simple_readpage,
-	.write_begin	= simple_write_begin,
-	.write_end	= simple_write_end,
+	.readpage	= sjfs_aops_readpage,
+	.write_begin	= sjfs_aops_write_begin,
+	.write_end	= sjfs_aops_write_end,
 	//.set_page_dirty	= __set_page_dirty_no_writeback,
 };
 
