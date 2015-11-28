@@ -64,6 +64,40 @@ const struct file_operations sjfs_file_operations = {
         .llseek         = sjfs_fops_llseek,
 };
 
+int sjfs_dir_fops_open(struct inode *f, struct file *f2) {
+	printk("sjfs_dir_fops_open -> dcache_dir_open\n");
+	return dcache_dir_open(f, f2);
+}
+int sjfs_dir_fops_release(struct inode *i, struct file *f) {
+	printk("sjfs_dir_fops_release -> dcache_dir_close\n");
+	return dcache_dir_close(i, f);
+}
+loff_t sjfs_dir_fops_llseek(struct file *f, loff_t l, int i) {
+	printk("sjfs_dir_fops_llseek -> dcache_dir_lseek\n");
+	return dcache_dir_lseek(f, l, i);
+}
+ssize_t sjfs_dir_fops_read(struct file *f, char __user *u, size_t s, loff_t *l) {
+	printk("sjfs_dir_fops_read -> generic_read_dir\n");
+	return generic_read_dir(f, u, s, l);
+}
+int sjfs_dir_fops_iterate(struct file *f, struct dir_context *d) {
+	printk("sjfs_dir_fops_iterate -> dcache_readdir\n");
+	return dcache_readdir(f, d);
+}
+int sjfs_dir_fops_fsync(struct file *f, loff_t l, loff_t l2, int datasync) {
+	printk("sjfs_dir_fops_fsync -> noop_fsync\n");
+	return noop_fsync(f, l, l2, datasync);
+}
+
+const struct file_operations sjfs_dir_operations = {
+	.open		= sjfs_dir_fops_open,
+	.release	= sjfs_dir_fops_release,
+	.llseek		= sjfs_dir_fops_llseek,
+	.read		= sjfs_dir_fops_read,
+	.iterate	= sjfs_dir_fops_iterate,
+	.fsync		= sjfs_dir_fops_fsync,
+};
+
 int sjfs_file_iops_setattr(struct dentry *dentry, struct iattr *iattr) {
 	printk("sjfs_file_iops_setattr -> simple_setattr (for testing only)\n");
 
@@ -147,7 +181,7 @@ struct inode *ramfs2_get_inode(struct super_block *sb, const struct inode *dir, 
 			
 			case S_IFDIR:
 				inode->i_op = &sjfs_dir_inode_operations;
-				inode->i_fop = &simple_dir_operations;
+				inode->i_fop = &sjfs_dir_operations;
 				
 				inc_nlink(inode); // directory inodes start off with i_nlink == 2 (for "." entry)
 				

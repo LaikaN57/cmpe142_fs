@@ -126,10 +126,10 @@ struct file_operations sjfs_fops = {
 	.compat_ioctl = sjfs_fops_compat_ioctl,
 	.mmap = sjfs_fops_mmap,
 	//.mremap = sjfs_fops_mremap,
-	.open = sjfs_fops_open, // Found in both github versions
+	.open = sjfs_fops_open,
 	.flush = sjfs_fops_flush,
 	.release = sjfs_fops_release,
-	.fsync = sjfs_fops_fsync, // Found in github/tf version (noop)
+	.fsync = sjfs_fops_fsync,
 	.aio_fsync = sjfs_fops_aio_fsync,
 	.fasync = sjfs_fops_fasync,
 	.lock = sjfs_fops_lock,
@@ -143,6 +143,19 @@ struct file_operations sjfs_fops = {
 	.fallocate = sjfs_fops_fallocate,
 	.show_fdinfo = sjfs_fops_show_fdinfo,
 	//.mmap_capabilities = sjfs_fops_mmap_capabilities,
+};
+
+// - root directory level --------------------------------------------------------------------------
+
+struct inode_operations sjfs_root_dir_iops {
+	.lookup = sjfs_iops_lookup,
+};
+
+struct file_operations sjfs_root_dir_fops {
+	.owner = THIS_MODULE,
+	.read = sjfs_fops_read,
+	.write = sjfs_fops_write,
+	.open = sjfs_fops_open,
 };
 
 // - super block level -----------------------------------------------------------------------------
@@ -199,8 +212,8 @@ int sjfs_fill_super(struct super_block *sb, void *data, int silent) {
 	inode->i_ino = 1;
 	inode->i_mode = S_IFDIR | S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH; // octal bitmask of file type and permissions 040755
 	inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
-	inode->i_op = &sjfs_iops;
-	inode->i_fop = &sjfs_fops;
+	inode->i_op = &sjfs_root_dir_iops;
+	inode->i_fop = &sjfs_root_dir_fops;
 
 	set_nlink(inode, 2);
 
@@ -244,6 +257,9 @@ int __init_or_module sjfs_init(void) {
 
 	if (test_and_set_bit(0, &once))
 		return -EBUSY;
+
+	// start user mode application
+	call_usermodehelper("/usr/local/bin/sjfs_helper", NULL, NULL, 0);
 
 	// register the filesystem
 	return register_filesystem(&sjfs_fs_type);
