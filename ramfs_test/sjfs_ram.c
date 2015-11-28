@@ -203,7 +203,21 @@ static int ramfs2_mknod(struct inode *dir, struct dentry *dentry, umode_t mode, 
 	struct inode * inode;
 	int ret = -ENOSPC;
 
-	printk("ramfs2_mknod(dir.ino:%lu, *dentry, m:%#0hx, dev)\n", dir->i_ino, (unsigned int) mode);
+	printk("ramfs2_mknod(\n");
+
+        if(dir) {
+                printk("--- dir.ino:%lu\n", dir->i_ino);
+        } else {
+                printk("--- dir.ino:NULL\n");
+        }
+        if(dentry && &(dentry->d_name) != NULL && (dentry->d_name).name != NULL) {
+                printk("--- dentry.name: \"%s\"\n", (dentry->d_name).name);
+        } else {
+                printk("--- dentry.name: NULL\n");
+        }
+
+        printk("--- mode: %#010hx\n", (unsigned int) mode);
+	printk("--- dev: ???\n");
 	
 	inode = ramfs2_get_inode(dir->i_sb, dir, mode, dev);
 	
@@ -219,10 +233,24 @@ static int ramfs2_mknod(struct inode *dir, struct dentry *dentry, umode_t mode, 
 	return ret;
 }
 
-static int ramfs2_create(struct inode *file, struct dentry *dentry, umode_t mode, bool excl) {
-	printk("ramfs2_create -> ramfs2_mknod\n");
+static int ramfs2_create(struct inode *dir, struct dentry *dentry, umode_t mode, bool excl) {
+	printk("ramfs2_create -> ramfs2_mknod(\n");
+
+        if(dir) {
+                printk("--- dir.ino:%lu\n", dir->i_ino);
+        } else {
+                printk("--- dir.ino:NULL\n");
+        }
+        if(dentry && &(dentry->d_name) != NULL && (dentry->d_name).name != NULL) {
+                printk("--- dentry.name: \"%s\"\n", (dentry->d_name).name);
+        } else {
+                printk("--- dentry.name: NULL\n");
+        }
 	
-	return ramfs2_mknod(file, dentry, mode | S_IFREG, 0);
+        printk("--- mode: %#010hx\n", (unsigned int) mode);
+        printk("--- excl: %#04hhx);\n", (unsigned char) excl);
+
+	return ramfs2_mknod(dir, dentry, mode | S_IFREG, 0);
 }
 
 static int ramfs2_mkdir(struct inode * dir, struct dentry * dentry, umode_t mode) {
@@ -270,23 +298,38 @@ static int ramfs2_symlink(struct inode * dir, struct dentry *dentry, const char 
 	return ret;
 }
 
-int sjfs_dir_iops_create(struct inode *i,struct dentry *d, umode_t u, bool b) {
-	printk("sjfs_dir_iops_create -> ramfs2_create\n");
-	return ramfs2_create(i, d, u, b);
+int sjfs_dir_iops_create(struct inode *dir,struct dentry *dentry, umode_t mode, bool b) {
+	printk("sjfs_dir_iops_create -> ramfs2_create(\n");
+
+        if(dir) {
+                printk("--- dir.ino:%lu\n", dir->i_ino);
+        } else {
+                printk("--- dir.ino:NULL\n");
+        }
+        if(dentry && &(dentry->d_name) != NULL && (dentry->d_name).name != NULL) {
+                printk("--- dentry.name: \"%s\"\n", (dentry->d_name).name);
+        } else {
+                printk("--- dentry.name: NULL\n");
+        }
+
+	printk("--- mode: %#010hx\n", (unsigned int) mode);
+	printk("--- b?: %#04hhx);\n", (unsigned char) b);
+
+	return ramfs2_create(dir, dentry, mode, b);
 }
 struct dentry * sjfs_dir_iops_lookup(struct inode *dir, struct dentry *dentry, unsigned int flags) {
-	printk("sjfs_dir_iops_lookup -> simple_lookupi(\n");
+	printk("sjfs_dir_iops_lookup -> simple_lookup(\n");
 	if(dir) {
-		printk("--- dir.ino:%lu", dir->i_ino);
+		printk("--- dir.ino:%lu\n", dir->i_ino);
 	} else {
-		printk("--- dir.ino:NULL");
+		printk("--- dir.ino:NULL\n");
 	}
 	if(dentry && &(dentry->d_name) != NULL && (dentry->d_name).name != NULL) {
-		printk("--- dentry.name: %s", (dentry->d_name).name);
+		printk("--- dentry.name: \"%s\"\n", (dentry->d_name).name);
 	} else {
-		printk("--- dentry.name: NULL");
+		printk("--- dentry.name: NULL\n");
 	}
-	printk("--- flags: %#0hx);", flags);
+	printk("--- flags: %#010hx);\n", flags);
 
 	return simple_lookup(dir, dentry, flags);
 }
@@ -312,9 +355,24 @@ int sjfs_dir_iops_rmdir(struct inode *i,struct dentry *d) {
 	printk("sjfs_dir_iops_rmdir -> simple_rmdir\n");
 	return simple_rmdir(i, d);
 }
-int sjfs_dir_iops_mknod(struct inode *i,struct dentry *d,umode_t u,dev_t d2) {
-	printk("sjfs_dir_iops_mknod -> ramfs2_mknod\n");
-	return ramfs2_mknod(i, d, u, d2);
+int sjfs_dir_iops_mknod(struct inode *dir, struct dentry *dentry, umode_t mode, dev_t dev) {
+	printk("sjfs_dir_iops_mknod -> ramfs2_mknod(\n");
+
+        if(dir) {
+                printk("--- dir.ino:%lu\n", dir->i_ino);
+        } else {
+                printk("--- dir.ino:NULL\n");
+        }
+        if(dentry && &(dentry->d_name) != NULL && (dentry->d_name).name != NULL) {
+                printk("--- dentry.name: \"%s\"\n", (dentry->d_name).name);
+        } else {
+                printk("--- dentry.name: NULL\n");
+        }
+
+        printk("--- mode: %#010hx\n", (unsigned int) mode);
+	printk("--- dev: ???);\n");
+
+	return ramfs2_mknod(dir, dentry, mode, dev);
 }
 int sjfs_dir_iops_rename(struct inode *i, struct dentry *d, struct inode *i2, struct dentry *d2) {
 	printk("sjfs_dir_iops_rename -> simple_rename\n");
