@@ -9,6 +9,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "blocks.h"
+
 #define MY_SOCK_PATH	"/tmp/sjfs"
 #define LISTEN_BACKLOG	50
 
@@ -75,5 +77,4 @@ int main(int argc, char *argv[]) {
 
 	return 0;
 }
-
 
