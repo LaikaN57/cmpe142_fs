@@ -64,13 +64,37 @@ const struct file_operations sjfs_file_operations = {
         .llseek         = sjfs_fops_llseek,
 };
 
-int sjfs_dir_fops_open(struct inode *f, struct file *f2) {
-	printk("sjfs_dir_fops_open -> dcache_dir_open\n");
-	return dcache_dir_open(f, f2);
+int sjfs_dir_fops_open(struct inode *dir, struct file *file) {
+	printk("sjfs_dir_fops_open -> dcache_dir_open(\n");
+
+        if(dir) {
+                printk("--- dir.ino:%lu\n", dir->i_ino);
+        } else {
+                printk("--- dir.ino:NULL\n");
+        }
+        if(file && &(file->f_path) != NULL && file->f_path.dentry != NULL && &(file->f_path.dentry->d_name) != NULL && file->f_path.dentry->d_name.name != NULL) {
+                printk("--- file.path: \"%s\");\n", file->f_path.dentry->d_name.name);
+        } else {
+                printk("--- file.path: NULL);\n");
+        }
+
+	return dcache_dir_open(dir, file);
 }
-int sjfs_dir_fops_release(struct inode *i, struct file *f) {
-	printk("sjfs_dir_fops_release -> dcache_dir_close\n");
-	return dcache_dir_close(i, f);
+int sjfs_dir_fops_release(struct inode *dir, struct file *file) {
+	printk("sjfs_dir_fops_release -> dcache_dir_close(\n");
+
+        if(dir) {
+                printk("--- dir.ino:%lu\n", dir->i_ino);
+        } else {
+                printk("--- dir.ino:NULL\n");
+        }
+        if(file && &(file->f_path) != NULL && file->f_path.dentry != NULL && &(file->f_path.dentry->d_name) != NULL && file->f_path.dentry->d_name.name != NULL) {
+                printk("--- file.path: \"%s\");\n", file->f_path.dentry->d_name.name);
+        } else {
+                printk("--- file.path: NULL);\n");
+        }
+
+	return dcache_dir_close(dir, file);
 }
 loff_t sjfs_dir_fops_llseek(struct file *f, loff_t l, int i) {
 	printk("sjfs_dir_fops_llseek -> dcache_dir_lseek\n");
