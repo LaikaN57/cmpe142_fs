@@ -275,11 +275,19 @@ int sjfs_dir_iops_create(struct inode *i,struct dentry *d, umode_t u, bool b) {
 	return ramfs2_create(i, d, u, b);
 }
 struct dentry * sjfs_dir_iops_lookup(struct inode *dir, struct dentry *dentry, unsigned int flags) {
+	printk("sjfs_dir_iops_lookup -> simple_lookupi(\n");
 	if(dir) {
-		printk("sjfs_dir_iops_lookup -> simple_lookupi(dir.ino:%lu, *dentry, f:%#0hx)\n", dir->i_ino, flags);
+		printk("--- dir.ino:%lu", dir->i_ino);
 	} else {
-		printk("sjfs_dir_iops_lookup -> simple_lookupi(dir.ino:NULL, *dentry, f:%#0hx)\n", flags);
+		printk("--- dir.ino:NULL");
 	}
+	if(dentry && &(dentry->d_name) != NULL && (dentry->d_name).name != NULL) {
+		printk("--- dentry.name: %s", (dentry->d_name).name);
+	} else {
+		printk("--- dentry.name: NULL");
+	}
+	printk("--- flags: %#0hx);", flags);
+
 	return simple_lookup(dir, dentry, flags);
 }
 int sjfs_dir_iops_link(struct dentry *d,struct inode *i,struct dentry *d2) {
@@ -383,7 +391,7 @@ void sjfs_kill_sb(struct super_block *sb) {
 } 
 
 struct file_system_type sjfs_fs_type = {
-	.name		= "sjfs",
+	.name		= "sjfs_ram",
 	.fs_flags	= 0, // FS_USERNS_MOUNT
 	.mount		= sjfs_mount,
 	.kill_sb	= sjfs_kill_sb,

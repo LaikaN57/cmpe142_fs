@@ -9,6 +9,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "../include/ipc.h"
+
 #include "blocks.h"
 
 #define MY_SOCK_PATH	"/tmp/sjfs"

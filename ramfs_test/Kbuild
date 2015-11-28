@@ -1,2 +1,2 @@
-obj-m += ramfs2.o
+obj-m += sjfs_ram.o
 

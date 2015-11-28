@@ -7,6 +7,8 @@
 #include <linux/dcache.h>
 #include <linux/pagemap.h>
 
+#include "../include/ipc.h"
+
 #define SJFS_MAGIC	0x534A5346
 
 #endif
