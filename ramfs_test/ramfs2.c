@@ -111,12 +111,19 @@ static const struct address_space_operations ramfs2_aops = {
 struct inode *ramfs2_get_inode(struct super_block *sb, const struct inode *dir, umode_t mode, dev_t dev) {
 	struct inode * inode;
 
-	printk("ramfs2_get_inode\n");
+	if(dir) {
+		printk("ramfs2_get_inode(sb. dir.ino:%lu, m:%#0hx, dev)\n", dir->i_ino, (unsigned int) mode);
+	} else {
+		printk("ramfs2_get_inode(sb. dir.ino:NULL, m:%#0hx, dev)\n", (unsigned int) mode);
+	}
 
 	inode = new_inode(sb);
 
 	if (inode) {
 		inode->i_ino = get_next_ino();
+
+		printk("--- ret: %lu\n", inode->i_ino);
+
 		inode_init_owner(inode, dir, mode);
 
 		inode->i_mapping->a_ops = &ramfs2_aops;
@@ -162,7 +169,7 @@ static int ramfs2_mknod(struct inode *dir, struct dentry *dentry, umode_t mode, 
 	struct inode * inode;
 	int ret = -ENOSPC;
 
-	printk("ramfs2_mknod\n");
+	printk("ramfs2_mknod(dir.ino:%lu, *dentry, m:%#0hx, dev)\n", dir->i_ino, (unsigned int) mode);
 	
 	inode = ramfs2_get_inode(dir->i_sb, dir, mode, dev);
 	
@@ -179,7 +186,7 @@ static int ramfs2_mknod(struct inode *dir, struct dentry *dentry, umode_t mode, 
 }
 
 static int ramfs2_create(struct inode *file, struct dentry *dentry, umode_t mode, bool excl) {
-	printk("ramfs2_create\n");
+	printk("ramfs2_create -> ramfs2_mknod\n");
 	
 	return ramfs2_mknod(file, dentry, mode | S_IFREG, 0);
 }
@@ -187,21 +194,27 @@ static int ramfs2_create(struct inode *file, struct dentry *dentry, umode_t mode
 static int ramfs2_mkdir(struct inode * dir, struct dentry * dentry, umode_t mode) {
 	int ret;
 
-	printk("ramfs2_mkdir\n");
+	printk("ramfs2_mkdir (will force error)\n");
 	
+	/*
 	ret = ramfs2_mknod(dir, dentry, mode | S_IFDIR, 0);
 	
 	if (!ret)
 		inc_nlink(dir);
-	
+	*/
+
+	ret = -ENOSPC;
+
 	return ret;
 }
 
-/*
 static int ramfs2_symlink(struct inode * dir, struct dentry *dentry, const char * symname) {
-	struct inode *inode;
+	//struct inode *inode;
 	int ret = -ENOSPC;
 
+	printk("ramfs2_symlink (will force error)\n");
+
+	/*
 	inode = ramfs2_get_inode(dir->i_sb, dir, S_IFLNK|S_IRWXUGO, 0);
 
 	if (inode) {
@@ -218,18 +231,22 @@ static int ramfs2_symlink(struct inode * dir, struct dentry *dentry, const char 
 			iput(inode);
 		}
 	}
+	*/
 
 	return ret;
 }
-*/
 
 int sjfs_dir_iops_create(struct inode *i,struct dentry *d, umode_t u, bool b) {
 	printk("sjfs_dir_iops_create -> ramfs2_create\n");
 	return ramfs2_create(i, d, u, b);
 }
-struct dentry * sjfs_dir_iops_lookup(struct inode *i,struct dentry *d, unsigned int ui) {
-	printk("sjfs_dir_iops_lookup -> simple_lookup\n");
-	return simple_lookup(i, d, ui);
+struct dentry * sjfs_dir_iops_lookup(struct inode *dir, struct dentry *dentry, unsigned int flags) {
+	if(dir) {
+		printk("sjfs_dir_iops_lookup -> simple_lookupi(dir.ino:%lu, *dentry, f:%#0hx)\n", dir->i_ino, flags);
+	} else {
+		printk("sjfs_dir_iops_lookup -> simple_lookupi(dir.ino:NULL, *dentry, f:%#0hx)\n", flags);
+	}
+	return simple_lookup(dir, dentry, flags);
 }
 int sjfs_dir_iops_link(struct dentry *d,struct inode *i,struct dentry *d2) {
 	printk("sjfs_dir_iops_link -> simple_link\n");
@@ -239,12 +256,12 @@ int sjfs_dir_iops_unlink(struct inode *i,struct dentry *d) {
 	printk("sjfs_dir_iops_unlink -> simple_unlink\n");
 	return simple_unlink(i, d);
 }
-/*
+
 int sjfs_dir_iops_symlink(struct inode *i,struct dentry *d,const char *c) {
 	printk("sjfs_dir_iops_symlink -> ramfs2_symlink\n");
 	return ramfs2_symlink(i, d, c);
 }
-*/
+
 int sjfs_dir_iops_mkdir(struct inode *i,struct dentry *d,umode_t u) {
 	printk("sjfs_dir_iops_mkdir -> ramfs2_mkdir\n");
 	return ramfs2_mkdir(i, d, u);
@@ -267,7 +284,7 @@ static const struct inode_operations sjfs_dir_inode_operations = {
 	.lookup		= sjfs_dir_iops_lookup,
 	.link		= sjfs_dir_iops_link,
 	.unlink		= sjfs_dir_iops_unlink,
-	//.symlink	= sjfs_dir_iops_symlink,
+	.symlink	= sjfs_dir_iops_symlink,
 	.mkdir		= sjfs_dir_iops_mkdir,
 	.rmdir		= sjfs_dir_iops_rmdir,
 	.mknod		= sjfs_dir_iops_mknod,
@@ -285,6 +302,8 @@ struct super_operations sjfs_sops = { // TODO: look up which functions we are re
 int sjfs_fill_super(struct super_block *sb, void *data, int silent) {
 	struct inode *inode;
 	struct dentry *root;
+
+	printk("sjfs_fill_super\n");
 
 	sb->s_maxbytes = MAX_LFS_FILESIZE;
 	sb->s_blocksize = PAGE_CACHE_SIZE;
@@ -310,6 +329,8 @@ int sjfs_fill_super(struct super_block *sb, void *data, int silent) {
 // - filesystem type level -------------------------------------------------------------------------
 
 struct dentry * sjfs_mount(struct file_system_type *fs_type, int flags, const char *dev_name, void *data) {
+	printk("sjfs_mount -> mount_single\n");
+
 	// start up our link to the userspace app?
 	
 	// mount to a single place with no device
@@ -317,6 +338,8 @@ struct dentry * sjfs_mount(struct file_system_type *fs_type, int flags, const ch
 }
 
 void sjfs_kill_sb(struct super_block *sb) {
+	printk("sjfs_kill_sb\n");
+
 	kfree(sb->s_fs_info);
 
 	// used for in memory fs
@@ -339,6 +362,8 @@ struct file_system_type sjfs_fs_type = {
 int __init_or_module sjfs_init(void) {
 	static unsigned long once;
 
+	printk("sjfs_init\n");
+
 	if (test_and_set_bit(0, &once))
 		return -EBUSY;
 
@@ -347,6 +372,8 @@ int __init_or_module sjfs_init(void) {
 }
 
 void __exit sjfs_exit(void) {
+	printk("sjfs_exit\n");
+
 	// unregister the filesystem
 	unregister_filesystem(&sjfs_fs_type);
 }
