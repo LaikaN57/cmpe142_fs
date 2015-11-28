@@ -1,3 +1,5 @@
+#!/usr/bin/make -f
+
 KDIR ?= /lib/modules/`uname -r`/build
 
 default:

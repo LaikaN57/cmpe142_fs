@@ -47,6 +47,7 @@ typedef struct {
 } indirect_pointer_block_t;
 
 // please don't load the whole freakin disk into memory
+/*
 typedef struct {
 	superblock_t superblock;						// 1 block
 	unsigned char inodes_bitmap[BLOCK_SIZE];		// 1 block
@@ -55,7 +56,7 @@ typedef struct {
 	unsigned char datablocks[MAX_INODES*MAX_DATABLOCKS_PER_INODE][BLOCK_SIZE];	// z blocks
 	unsigned char reserved[BLOCK_SIZE];				// 1 block
 } disk_t;
-
+*/
 
 
 // reading directory contents

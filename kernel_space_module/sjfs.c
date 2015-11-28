@@ -259,7 +259,7 @@ int __init_or_module sjfs_init(void) {
 		return -EBUSY;
 
 	// start user mode application
-	call_usermodehelper("/usr/local/bin/sjfs_helper", NULL, NULL, 0);
+	//call_usermodehelper("/usr/local/bin/sjfs_helper", NULL, NULL, 0);
 
 	// register the filesystem
 	return register_filesystem(&sjfs_fs_type);
