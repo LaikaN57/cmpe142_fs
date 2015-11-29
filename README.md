@@ -12,6 +12,7 @@ Here is some authoritative information on kernel module and vfs development.
 * [Documentation](https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/tree/Documentation)
   * [Building External Modules](https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/tree/Documentation/kbuild/modules.txt)
   * [Overview of the Linux Virtual File System](https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/tree/Documentation/filesystems/vfs.txt)
+  * [Kernel Connector](https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/tree/Documentation/connector/connector.txt)
 
 ## Headers / Sources
 These are some of the core includes we will need to get our module and filesystem installed.
