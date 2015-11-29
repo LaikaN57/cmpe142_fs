@@ -138,6 +138,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	// create socket
+	// ---------------------------------------------------------------------------------------------
 	sfd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if(sfd == -1) {
 		perror("socket");
@@ -161,6 +162,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	// ACCEPT LOOP
+	// ---------------------------------------------------------------------------------------------
 	while(1) { // TODO: allow some kind of exit condition
 		// accept a new connection
 		memset(&peer_addr, 0, sizeof(struct sockaddr_un));
@@ -172,6 +174,7 @@ int main(int argc, char *argv[]) {
 		}
 
 		// RECV LOOP
+		// ---------------------------------------------------------------------------------------------
 		while(1) { // TODO: allow some kind of exit condition
 			// read from socket
 			
@@ -196,6 +199,8 @@ int main(int argc, char *argv[]) {
 		}
 	} // ACCEPT LOOP END
 
+	// cleanup (unreachable?)
+	// ---------------------------------------------------------------------------------------------
 	if(close(sfd) == -1) {
 		perror("s close");
 	}
