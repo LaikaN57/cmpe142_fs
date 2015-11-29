@@ -12,6 +12,8 @@
 #define INODE_SIZE		(sizeof(inode_t))
 #define POINTER_SIZE	(4)
 
+#define MIN_BLOCKS	(6)
+
 #define MAX_INODES		(BLOCK_SIZE * 8)
 #define MAX_DATABLOCKS_PER_INODE (66062)
 
