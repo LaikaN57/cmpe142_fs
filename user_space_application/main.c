@@ -1,6 +1,3 @@
-// man 7 unix
-// man 2 bind
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -12,10 +9,10 @@
 #include "../include/ipc.h"
 #include "../include/blocks.h"
 
-#define MY_SOCK_PATH	"/tmp/sjfs"
-#define LISTEN_BACKLOG	50
-
 // TODO: SIGPIPE handler for socket?
+
+// used to kill the main while loop
+static int need_exit;
 
 int format(char * filename, int size) {
 	int ret;
@@ -77,17 +74,44 @@ out:
 	return ret;
 }
 
+int do_work(unsigned char * buffer) {
+	// seek address
+	if(fseek(diskFile, address * BLOCKSIZE, SEEK_SET) != 0) {
+		return -1;
+	}
+
+	// decode opcode to decide what work we should perform
+	// the opcode is the firt byte in the buffer
+	switch(opcode) {
+		case READ:
+			break;
+		case WRITE:
+			break;
+		case NOTIFY:
+			break;
+		default:
+			break;
+	}
+
+	// TODO: make this function actually do something
+	return -1;
+}
+
 int main(int argc, char *argv[]) {
+	// for getopts and file
 	int c;
 	int size;
 	char * filename;
 	FILE * diskFile;
 
-	int sfd;
-	int cfd;
-	struct sockaddr_un my_addr;
-	struct sockaddr_un peer_addr;
-	socklen_t peer_addr_size;
+	// for netlink socket
+	int s;
+	unsigned char buf[2048];
+	int len;
+	struct nlmsghdr *reply;
+	struct sockaddr_nl l_local;
+	struct cn_msg *data;
+	struct pollfd pfd;
 
 	// parse command line options
 	// ---------------------------------------------------------------------------------------------
@@ -138,74 +162,86 @@ int main(int argc, char *argv[]) {
 
 	// create socket
 	// ---------------------------------------------------------------------------------------------
-	sfd = socket(AF_UNIX, SOCK_STREAM, 0);
-	if(sfd == -1) {
+	memset(buf, 0, sizeof(buf));
+
+	s = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_CONNECTOR);
+	if (s == -1) {
 		perror("socket");
 		fclose(diskFile);
-		exit(EXIT_FAILURE); // we cannot recover from this
+		exit(EXIT_FAILURE);
 	}
 
-	// bind socket to pathname
-	memset(&my_addr, 0, sizeof(struct sockaddr_un));
-	my_addr.sun_family = AF_UNIX;
-	strncpy(my_addr.sun_path, MY_SOCK_PATH, sizeof(my_addr.sun_path) - 1);
-	if(bind(sfd, (struct sockaddr *) &my_addr, sizeof(struct sockaddr_un)) == -1) {
+	l_local.nl_family = AF_NETLINK;
+	l_local.nl_groups = -1; /* bitmask of requested groups */
+	l_local.nl_pid = 0;
+
+	printf("subscribing to %u.%u\n", CN_TEST_IDX, CN_TEST_VAL);
+
+	if (bind(s, (struct sockaddr *)&l_local, sizeof(struct sockaddr_nl)) == -1) {
 		perror("bind");
-		exit(EXIT_FAILURE); // we cannot recover from this
+		close(s);
+		fclose(diskFile);
+		exit(EXIT_FAILURE);
 	}
 
-	// start listening for socket connections
-	if(listen(sfd, LISTEN_BACKLOG) == -1) {
-		perror("listen");
-		exit(EXIT_FAILURE); // we cannot recover from this
-	}
+	pfd.fd = s;
 
-	// ACCEPT LOOP
+	// LOOP
 	// ---------------------------------------------------------------------------------------------
-	while(1) { // TODO: allow some kind of exit condition
-		// accept a new connection
-		memset(&peer_addr, 0, sizeof(struct sockaddr_un));
-		peer_addr_size = sizeof(struct sockaddr_un);
-		cfd = accept(sfd, (struct sockaddr *) &peer_addr, &peer_addr_size); // TODO: make this non-blocking for user input from console?
-		if(cfd == -1) {
-			perror("accept");
-			continue; // do we need to do any other cleanup?
-		}
-
-		// RECV LOOP
-		// ---------------------------------------------------------------------------------------------
-		while(1) { // TODO: allow some kind of exit condition
-			// read from socket
-			
-			// seek address
-			if(fseek(diskFile, address * BLOCKSIZE, SEEK_SET) != 0) {
+	while(!need_exit) {
+		pfd.events = POLLIN;
+		pfd.revents = 0;
+		switch (poll(&pfd, 1, -1)) {
+			case 0:
+				need_exit = 1;
+				break;
+			case -1:
+				if (errno != EINTR) {
+					need_exit = 1;
+					break;
+				}
 				continue;
-			}
-			
-			switch(opcode) {
-				case READ:
-					break;
-				case WRITE:
-					break;
-				default:
-					break;
-			}
-		} // RECV LOOP END
-
-		if(close(cfd) == -1) {
-			perror("c close");
-			continue;
 		}
-	} // ACCEPT LOOP END
+		if (need_exit)
+			break;
+
+		memset(buf, 0, sizeof(buf));
+		len = recv(s, buf, sizeof(buf), 0);
+		if (len == -1) {
+			perror("recv buf");
+			continue; // none fatal error, we just skip is packet
+		}
+		reply = (struct nlmsghdr *)buf;
+
+		switch (reply->nlmsg_type) {
+			case NLMSG_ERROR:
+				printf("Warn message received.\n");
+				break;
+			case NLMSG_DONE:
+				data = (struct cn_msg *)NLMSG_DATA(reply);
+
+				printf("[%x.%x] [%08u.%08u].\n", data->id.idx, data->id.val, data->seq, data->ack);
+
+				// do something with data
+				if(do_work() < 0) {
+					printf("Warn failed to do_work.");
+				}
+				break;
+			default:
+				printf("Warn unknown nlmsg_type.\n");
+				break;
+		}
+	} // LOOP END
+
+	if(close(cfd) == -1) {
+		perror("c close");
+		continue;
+	}
 
 	// cleanup (unreachable?)
 	// ---------------------------------------------------------------------------------------------
-	if(close(sfd) == -1) {
+	if(close(s) == -1) { // TODO: check return cond
 		perror("s close");
-	}
-
-	if(unlink(MY_SOCK_PATH) == -1) {
-		perror("unlink");
 	}
 
 	fclose(diskFile);
