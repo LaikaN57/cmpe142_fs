@@ -16,7 +16,7 @@
 
 #define SJFS_MAGIC	0x534A5346
 
-MODULE_LICENSE("Proprietary");
+MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Farbod Jahan <>");
 MODULE_AUTHOR("Alex Kennedy <alexzanderkennedy@gmail.com>");
 MODULE_AUTHOR("Patrick-Daniel Llanes <>");
@@ -148,15 +148,44 @@ int sjfs_aops_readpage(struct file *f, struct page *p) {
 	
 	return simple_readpage(f, p);
 }
-int sjfs_aops_write_begin(struct file *f, struct address_space *mapping, loff_t pos, unsigned len, unsigned flags, struct page **pagep, void **fsdata) {
-	printk("sjfs_aops_write_begin -> simple_write_begin\n");
+int sjfs_aops_write_begin(struct file *file, struct address_space *mapping, loff_t pos, unsigned len, unsigned flags, struct page **pagep, void **fsdata) {
+	printk("sjfs_aops_write_begin -> simple_write_begin(\n");
+        if(file && &(file->f_path) != NULL && file->f_path.dentry != NULL && &(file->f_path.dentry->d_name) != NULL && file->f_path.dentry->d_name.name != NULL) {
+                printk("--- file.path: \"%s\");\n", file->f_path.dentry->d_name.name);
+        } else {
+                printk("--- file.path: NULL);\n");
+        }
+        if(mapping && mapping->host) {
+                printk("--- mapping.host: %lu\n", mapping->host->i_ino);
+        } else {
+                printk("--- mapping.host: NULL\n");
+        }
+        printk("--- pos: %lli\n", pos);
+        printk("--- len: %u\n", len);
+        printk("--- flags: %u\n", flags);
+        printk("--- pagep: ???)\n");
+
 	
-	return simple_write_begin(f, mapping, pos, len, flags, pagep, fsdata);
+	return simple_write_begin(file, mapping, pos, len, flags, pagep, fsdata);
 }
-int sjfs_aops_write_end(struct file *f, struct address_space *mapping, loff_t pos, unsigned len, unsigned copied, struct page *page, void *fsdata) {
-	printk("sjfs_aops_write_end -> simple_write_end\n");
-	
-	return simple_write_end(f, mapping, pos, len, copied, page, fsdata);
+int sjfs_aops_write_end(struct file *file, struct address_space *mapping, loff_t pos, unsigned len, unsigned copied, struct page *page, void *fsdata) {
+	printk("sjfs_aops_write_end -> simple_write_endi(\n");
+        if(file && &(file->f_path) != NULL && file->f_path.dentry != NULL && &(file->f_path.dentry->d_name) != NULL && file->f_path.dentry->d_name.name != NULL) {
+                printk("--- file.path: \"%s\");\n", file->f_path.dentry->d_name.name);
+        } else {
+                printk("--- file.path: NULL);\n");
+        }
+	if(mapping && mapping->host) {
+		printk("--- mapping.host: %lu\n", mapping->host->i_ino);
+	} else {
+		printk("--- mapping.host: NULL\n");
+	}
+	printk("--- pos: %lli\n", pos);
+	printk("--- len: %u\n", len);
+        printk("--- copied: %u\n", copied);
+	printk("--- page: ???)\n");
+
+	return simple_write_end(file, mapping, pos, len, copied, page, fsdata);
 }
 
 static const struct address_space_operations ramfs2_aops = {
