@@ -426,9 +426,21 @@ int sjfs_dir_iops_link(struct dentry *d,struct inode *i,struct dentry *d2) {
 	printk("sjfs_dir_iops_link -> simple_link\n");
 	return simple_link(d, i, d2);
 }
-int sjfs_dir_iops_unlink(struct inode *i,struct dentry *d) {
+int sjfs_dir_iops_unlink(struct inode *dir,struct dentry *dentry) {
 	printk("sjfs_dir_iops_unlink -> simple_unlink\n");
-	return simple_unlink(i, d);
+
+        if(dir) {
+                printk("--- dir.ino:%lu\n", dir->i_ino);
+        } else {
+                printk("--- dir.ino:NULL\n");
+        }
+        if(dentry && &(dentry->d_name) != NULL && (dentry->d_name).name != NULL) {
+                printk("--- dentry.name: \"%s\"\n", (dentry->d_name).name);
+        } else {
+                printk("--- dentry.name: NULL\n");
+        }
+
+	return simple_unlink(dir, dentry);
 }
 
 int sjfs_dir_iops_symlink(struct inode *i,struct dentry *d,const char *c) {
