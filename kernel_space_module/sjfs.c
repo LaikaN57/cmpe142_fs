@@ -1,6 +1,6 @@
 #include "sjfs.h"
 
-MODULE_LICENSE("Proprietary");
+MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Farbod Jahan <>");
 MODULE_AUTHOR("Alex Kennedy <alexzanderkennedy@gmail.com>");
 MODULE_AUTHOR("Patrick-Daniel Llanes <>");
@@ -9,25 +9,30 @@ MODULE_AUTHOR("Onyema Ude <>");
 MODULE_DESCRIPTION("San Jose Filesystem");
 MODULE_VERSION("0:1.0.1");
 
+// dummy function for netlink socket
+static void cn_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp) {
+	printk("cn_callback got called\n");
+}
+
 // - socket level --------------------------------------------------------------------------
 
 // reads a block from disk (handles all the socket calling)
-int sjfs_read_block(unsigned int address, (unsigned char *) block) {
-	return -1
+int sjfs_read_block(unsigned int address, unsigned char * block) {
+	return -1;
 }
 
 // writes a block to disk (handles all the socket calling)
-int sjfs_write_block(unsigned int address, (unsigned char *) block) {
+int sjfs_write_block(unsigned int address, unsigned char * block) {
 	return -1;
 }
 
 // reads a buffer from disk (this should handle all of the block looping)
-int sjfs_read_buffer(unsigned int offset, unsigned int len, (unsigned char *) buffer) {
+int sjfs_read_buffer(unsigned int offset, unsigned int len, unsigned char * buffer) {
 	return -1;
 }
 
 // writes a buffer to disk (this should handle all of the block looping)
-int sjfs_write_buffer(unsigned int offset, unsigned int len, (unsigned char *) buffer) {
+int sjfs_write_buffer(unsigned int offset, unsigned int len, unsigned char * buffer) {
 	return -1;
 }
 
@@ -171,11 +176,11 @@ struct file_operations sjfs_fops = {
 
 // - root directory level --------------------------------------------------------------------------
 
-struct inode_operations sjfs_root_dir_iops {
+struct inode_operations sjfs_root_dir_iops = {
 	.lookup = sjfs_iops_lookup,
 };
 
-struct file_operations sjfs_root_dir_fops {
+struct file_operations sjfs_root_dir_fops = {
 	.owner = THIS_MODULE,
 	.read = sjfs_fops_read,
 	.write = sjfs_fops_write,
@@ -252,17 +257,34 @@ int sjfs_fill_super(struct super_block *sb, void *data, int silent) {
 // - filesystem type level -------------------------------------------------------------------------
 
 struct dentry * sjfs_mount(struct file_system_type *fs_type, int flags, const char *dev_name, void *data) {
-	// start up our link to the userspace app?
-	
+	int err;
+
+	// start up our link to the userspace app
+	// TODO: replace with actual callback code
+	err = cn_add_callback(&cn_id, cn_name, cn_callback);
+	if(err) {
+		goto err_out;
+	}
+
 	// mount to a single place with no device
 	return mount_single(fs_type, flags, data, sjfs_fill_super);
+
+err_out:
+        if(nls && nls->sk_socket) {
+                sock_release(nls->sk_socket);
+        }
+	return NULL;
 }
 
 void sjfs_kill_sb(struct super_block *sb) {
 	// used for in memory fs
 	kill_litter_super(sb);
 	
-	// shutdown our link to the userspace app?
+	// shutdown our link to the userspace app
+	cn_del_callback(&cn_id);
+	if(nls && nls->sk_socket) {
+		sock_release(nls->sk_socket);
+	}
 } 
 
 struct file_system_type sjfs_fs_type = {

@@ -8,7 +8,7 @@
 #ifndef BLOCKS_H
 #define BLOCKS_H
 
-#define BLOCK_SIZE		(1024)
+#define SJFS_BLOCK_SIZE		(1024)
 #define INODE_SIZE		(sizeof(inode_t))
 #define POINTER_SIZE	(4)
 

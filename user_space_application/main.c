@@ -10,8 +10,7 @@
 #include <unistd.h>
 
 #include "../include/ipc.h"
-
-#include "blocks.h"
+#include "../include/blocks.h"
 
 #define MY_SOCK_PATH	"/tmp/sjfs"
 #define LISTEN_BACKLOG	50
