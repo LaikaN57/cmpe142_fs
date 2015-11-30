@@ -16,6 +16,9 @@
 
 #define SJFS_MAGIC	0x534A5346
 
+// for testing only
+#include <linux/uio.h>
+
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Farbod Jahan <>");
 MODULE_AUTHOR("Alex Kennedy <alexzanderkennedy@gmail.com>");
@@ -25,14 +28,46 @@ MODULE_AUTHOR("Onyema Ude <>");
 MODULE_DESCRIPTION("San Jose Filesystem");
 MODULE_VERSION("0:1.1.1");
 
-ssize_t sjfs_fops_read_iter(struct kiocb *k, struct iov_iter *i) {
-	printk("sjfs_fops_read_iter -> generic_file_read_iter\n");
-	return generic_file_read_iter(k, i);
+ssize_t sjfs_fops_read_iter(struct kiocb *iocb, struct iov_iter *iter) {
+        struct file * file = iocb->ki_filp;
+
+        printk("sjfs_fops_read_iter -> generic_file_read_iter(\n");
+
+	if(file && &(file->f_path) != NULL && file->f_path.dentry != NULL && &(file->f_path.dentry->d_name) != NULL && file->f_path.dentry->d_name.name != NULL) {
+                printk("--- file.path: \"%s\");\n", file->f_path.dentry->d_name.name);
+        } else {
+                printk("--- file.path: NULL);\n");
+        }
+        if(iter) {
+                printk("--- iter.type: %i\n", iter->type);
+                printk("--- iter.iov_offset: %i\n", iter->iov_offset);
+                printk("--- iter.count: %i\n", iter->count);
+        } else {
+                printk("--- iter: NULL\n");
+        }
+        printk(");\n");
+
+	return generic_file_read_iter(iocb, iter);
 }
-ssize_t sjfs_fops_write_iter(struct kiocb *k, struct iov_iter *i) {
+ssize_t sjfs_fops_write_iter(struct kiocb *iocb, struct iov_iter *from) {
+	struct file * file = iocb->ki_filp;
+
 	printk("sjfs_fops_write_iter -> generic_file_write_iter(\n");
-	printk(")\n");
-	return generic_file_write_iter(k, i);
+        if(file && &(file->f_path) != NULL && file->f_path.dentry != NULL && &(file->f_path.dentry->d_name) != NULL && file->f_path.dentry->d_name.name != NULL) {
+                printk("--- file.path: \"%s\");\n", file->f_path.dentry->d_name.name);
+        } else {
+                printk("--- file.path: NULL);\n");
+        }
+	if(from) {
+		printk("--- from.type: %i\n", from->type);
+                printk("--- from.iov_offset: %i\n", from->iov_offset);
+                printk("--- from.count: %i\n", from->count);
+	} else {
+		printk("--- from: NULL\n");
+	}
+	printk(");\n");
+
+	return generic_file_write_iter(iocb, from);
 }
 int sjfs_fops_mmap(struct file *f, struct vm_area_struct *v) {
 	printk("sjfs_fops_mmap -> generic_file_mmap\n");
