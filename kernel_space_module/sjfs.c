@@ -9,6 +9,30 @@ MODULE_AUTHOR("Onyema Ude <>");
 MODULE_DESCRIPTION("San Jose Filesystem");
 MODULE_VERSION("0:1.0.1");
 
+// - socket level --------------------------------------------------------------------------
+
+// reads a block from disk (handles all the socket calling)
+int sjfs_read_block(unsigned int address, (unsigned char *) block) {
+	return -1
+}
+
+// writes a block to disk (handles all the socket calling)
+int sjfs_write_block(unsigned int address, (unsigned char *) block) {
+	return -1;
+}
+
+// reads a buffer from disk (this should handle all of the block looping)
+int sjfs_read_data(unsigned int offset, (unsigned char *) buffer) {
+	return -1;
+}
+
+// writes a buffer to disk (this should handle all of the block looping)
+int sjfs_write_data(unsigned int offset, (unsigned char *) buffer) {
+	return -1;
+}
+
+// - syscall level -----------------------------------------------------------------------------------
+
 struct dentry * sjfs_iops_lookup(struct inode *i,struct dentry *d, unsigned int ui) { printk("sjfs_iops_lookup\n"); return NULL; }
 const char * sjfs_iops_follow_link(struct dentry *d, void **v) { printk("sjfs_iops_follow_link\n"); return NULL; }
 int sjfs_iops_permission(struct inode *inode, int mask) {
