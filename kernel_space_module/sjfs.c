@@ -101,8 +101,20 @@ struct inode_operations sjfs_iops = {
 };
 
 loff_t sjfs_fops_llseek(struct file *f, loff_t l, int i) { printk("sjfs_fops_llseek\n"); return 0; }
-ssize_t sjfs_fops_read(struct file *f, char __user *u, size_t s, loff_t *l) { printk("sjfs_fops_read\n"); return 0; }
-ssize_t sjfs_fops_write(struct file *f, const char __user *u, size_t s, loff_t *l) { printk("sjfs_fops_write\n"); return 0; }
+ssize_t sjfs_fops_read(struct file *file, char __user *to, size_t count, loff_t *ppos) {
+	printk("sjfs_fops_read\n");
+	
+	// see simple_read_from_buffer where "from" is our user space app.
+	
+	return 0;
+}
+ssize_t sjfs_fops_write(struct file *f, const char __user *from, size_t count, loff_t *ppos) {
+	printk("sjfs_fops_write\n");
+	
+	// see simple_write_to_buffer where "to" is our user space app.
+	
+	return 0;
+}
 ssize_t sjfs_fops_read_iter(struct kiocb *k, struct iov_iter *i) { printk("sjfs_fops_read_iter\n"); return 0; }
 ssize_t sjfs_fops_write_iter(struct kiocb *k, struct iov_iter *i) { printk("sjfs_fops_write_iter\n"); return 0; }
 int sjfs_fops_iterate(struct file *f, struct dir_context *d) { printk("sjfs_fops_iterate\n"); return 0; }
