@@ -87,7 +87,6 @@ int sjfs_iops_set_acl(struct inode *i, struct posix_acl *p, int a) { printk("sjf
 struct inode_operations sjfs_iops = {
 	.permission = sjfs_iops_permission,
 	//.posix_acl = sjfs_iops_posix_acl,
-	.create = sjfs_iops_create,		// yes - for open call (touch)
 	.unlink = sjfs_iops_unlink,		// yes - for unlink call (rm)
 	.rename = sjfs_iops_rename,		// yes - for rename call (mv?)
 	.rename2 = sjfs_iops_rename2,
@@ -96,7 +95,6 @@ struct inode_operations sjfs_iops = {
 	.fiemap = sjfs_iops_fiemap,
 	.update_time = sjfs_iops_update_time,
 	.atomic_open = sjfs_iops_atomic_open,
-	.tmpfile = sjfs_iops_tmpfile,		// no - optional
 	.set_acl = sjfs_iops_set_acl,
 };
 
