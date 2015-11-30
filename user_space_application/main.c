@@ -6,8 +6,38 @@
 #include <string.h>
 #include <unistd.h>
 
+// netlink socket headers
+#include <asm/types.h>
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/poll.h>
+
+#include <linux/netlink.h>
+#include <linux/rtnetlink.h>
+
+#include <arpa/inet.h>
+
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <errno.h>
+#include <time.h>
+#include <getopt.h>
+
+#include <linux/connector.h>
+
+// our headers
 #include "../include/ipc.h"
 #include "../include/blocks.h"
+
+#define NETLINK_CONNECTOR       11
+
+/* Hopefully your userspace connector.h matches this kernel */
+#define CN_TEST_IDX             CN_NETLINK_USERS + 3
+#define CN_TEST_VAL             0x456
 
 // TODO: SIGPIPE handler for socket?
 
@@ -55,13 +85,13 @@ int format(char * filename, int size) {
 	// writes out zero blocks up until size in KB
 	// clears a block of memory that is BLOCKSIZE
 	// writes multiple zeroBlocks to file up to size
-	zeroBlock = (unsigned char *) calloc(BLOCKSIZE, sizeof(unsigned char));
+	zeroBlock = (unsigned char *) calloc(BLOCK_SIZE, sizeof(unsigned char));
 	if(zeroBlock == NULL) {
 		ret = 0;
 		fclose(diskFile);
 		goto out;
 	}
-	for(i = BLOCKSIZE; i < size; i += BLOCKSIZE) {
+	for(i = BLOCK_SIZE; i < size; i += BLOCK_SIZE) {
 		byres = fwrite(zeroBlock, sizeof(unsigned char), sizeof(zeroBlock), diskFile);
 	}
 
@@ -74,27 +104,79 @@ out:
 	return ret;
 }
 
+static int netlink_send(int s, struct cn_msg *msg) {
+	static uint32_t seq;
+	struct nlmsghdr *nlh;
+	unsigned int size;
+	int err;
+	char buf[2048];
+	struct cn_msg *m;
+
+	/* call was this
+	char buf[1024];
+	int len;
+	struct cn_msg *data;
+
+	memset(buf, 0, sizeof(buf));
+
+	data = (struct cn_msg *)buf;
+
+	data->id.idx = CN_TEST_IDX;
+	data->id.val = CN_TEST_VAL;
+	data->seq = seq++;
+	data->ack = 0;
+	data->len = 0;
+
+	len = netlink_send(s, data);
+	*/
+
+	// this was actually the ucon fuction part
+
+	size = NLMSG_SPACE(sizeof(struct cn_msg) + msg->len);
+
+	nlh = (struct nlmsghdr *)buf;
+	nlh->nlmsg_seq = seq++;
+	nlh->nlmsg_pid = getpid();
+	nlh->nlmsg_type = NLMSG_DONE;
+	nlh->nlmsg_len = size;
+	nlh->nlmsg_flags = 0;
+
+	m = NLMSG_DATA(nlh);
+	memcpy(m, msg, sizeof(*m) + msg->len);
+
+	err = send(s, nlh, size, 0);
+	if (err == -1)
+		printf("Failed to send: %s [%d].\n", strerror(errno), errno);
+
+	return err;
+}
+
 int do_work(unsigned char * buffer) {
 	// seek address
-	if(fseek(diskFile, address * BLOCKSIZE, SEEK_SET) != 0) {
+	if(fseek(diskFile, address * BLOCK_SIZE, SEEK_SET) != 0) {
 		return -1;
 	}
 
 	// decode opcode to decide what work we should perform
 	// the opcode is the firt byte in the buffer
 	switch(opcode) {
-		case READ:
+		case OPCODE_READ:
+			// get data from disk
+			//netlink_send(s, block);
 			break;
-		case WRITE:
+		case OPCODE_WRITE:
+			// fwrite buffer to diskFile
 			break;
-		case NOTIFY:
+		case OPCODE_NOTIFY:
+			printf("Info sjfs said: %s\n", buffer);
 			break;
 		default:
+			printf("Warn unknown opcode.\n");
 			break;
 	}
 
 	// TODO: make this function actually do something
-	return -1;
+	return 0;
 }
 
 int main(int argc, char *argv[]) {
@@ -223,7 +305,8 @@ int main(int argc, char *argv[]) {
 				printf("[%x.%x] [%08u.%08u].\n", data->id.idx, data->id.val, data->seq, data->ack);
 
 				// do something with data
-				if(do_work() < 0) {
+				// TODO: fix this call to only pass the payload
+				if(do_work(data) < 0) {
 					printf("Warn failed to do_work.");
 				}
 				break;
@@ -232,11 +315,6 @@ int main(int argc, char *argv[]) {
 				break;
 		}
 	} // LOOP END
-
-	if(close(cfd) == -1) {
-		perror("c close");
-		continue;
-	}
 
 	// cleanup (unreachable?)
 	// ---------------------------------------------------------------------------------------------

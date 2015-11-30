@@ -1,8 +1,11 @@
 #ifndef IPC_H
 #define IPC_H
 
-#define KERNEL_PORT	(27420)
-#define USER_PORT	(27421)
+typedef struct {
+	unsigned char opcode;
+	unsigned long address;
+	unsigned char * data;
+} sjfs_message;
 
 #define OPCODE_READ	0
 #define OPCODE_WRITE	1
