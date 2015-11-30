@@ -22,12 +22,12 @@ int sjfs_write_block(unsigned int address, (unsigned char *) block) {
 }
 
 // reads a buffer from disk (this should handle all of the block looping)
-int sjfs_read_data(unsigned int offset, (unsigned char *) buffer) {
+int sjfs_read_buffer(unsigned int offset, unsigned int len, (unsigned char *) buffer) {
 	return -1;
 }
 
 // writes a buffer to disk (this should handle all of the block looping)
-int sjfs_write_data(unsigned int offset, (unsigned char *) buffer) {
+int sjfs_write_buffer(unsigned int offset, unsigned int len, (unsigned char *) buffer) {
 	return -1;
 }
 
