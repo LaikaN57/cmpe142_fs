@@ -11,7 +11,8 @@ MODULE_VERSION("0:1.0.1");
 
 // dummy function for netlink socket
 static void cn_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp) {
-	printk("cn_callback got called\n");
+	printk("cn_callback %s: idx=%x, val=%x, seq=%u, ack=%u, len=%d: %s.\n", __func__, msg->id.idx, msg->id.val,
+			msg->seq, msg->ack, msg->len, msg->len ? (char *)msg->data : "");
 }
 
 // - socket level --------------------------------------------------------------------------
@@ -318,6 +319,8 @@ int __init_or_module sjfs_init(void) {
 
 	if (test_and_set_bit(0, &once))
 		return -EBUSY;
+
+	sema_init(&cn_sem, 1);
 
 	// start user mode application
 	//call_usermodehelper("/usr/local/bin/sjfs_helper", NULL, NULL, 0);
