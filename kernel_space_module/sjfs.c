@@ -131,19 +131,17 @@ unsigned sjfs_fops_mmap_capabilities(struct file *f) { printk("sjfs_fops_mmap_ca
 struct file_operations sjfs_fops = {
 	.owner = THIS_MODULE,
 	.llseek = sjfs_fops_llseek,
-	.read = sjfs_fops_read, // Found in both github versions
-	.write = sjfs_fops_write, // Found in both github versions
+	.read = sjfs_fops_read,			// yes - for read call
+	.write = sjfs_fops_write,		// yes - for write call
 	.read_iter = sjfs_fops_read_iter,
 	.write_iter = sjfs_fops_write_iter,
-	.iterate = sjfs_fops_iterate,
 	.poll = sjfs_fops_poll,
 	.unlocked_ioctl = sjfs_fops_unlocked_ioctl,
-	.compat_ioctl = sjfs_fops_compat_ioctl,
 	.mmap = sjfs_fops_mmap,
 	.mremap = sjfs_fops_mremap,
-	.open = sjfs_fops_open,
-	.flush = sjfs_fops_flush,
-	.release = sjfs_fops_release,
+	.open = sjfs_fops_open,			// yes - for open call
+	.flush = sjfs_fops_flush,		// yes - for close call
+	.release = sjfs_fops_release,		// yes - for last close call?
 	.fsync = sjfs_fops_fsync,
 	.aio_fsync = sjfs_fops_aio_fsync,
 	.fasync = sjfs_fops_fasync,
@@ -175,10 +173,33 @@ struct inode_operations sjfs_root_dir_iops = {
 };
 
 struct file_operations sjfs_root_dir_fops = {
-	.owner = THIS_MODULE,
-	.read = sjfs_fops_read,
-	.write = sjfs_fops_write,
-	.open = sjfs_fops_open,
+        .owner = THIS_MODULE,
+        .llseek = sjfs_fops_llseek,
+        .read = sjfs_fops_read,                 // yes - for read call
+        .write = sjfs_fops_write,               // yes - for write call
+        .read_iter = sjfs_fops_read_iter,
+        .write_iter = sjfs_fops_write_iter,
+        .iterate = sjfs_fops_iterate,           // yes - read dir
+        .poll = sjfs_fops_poll,
+        .unlocked_ioctl = sjfs_fops_unlocked_ioctl,
+        .mmap = sjfs_fops_mmap,
+        .mremap = sjfs_fops_mremap,
+        .open = sjfs_fops_open,                 // yes - for open call
+        .flush = sjfs_fops_flush,               // yes - for close call
+        .release = sjfs_fops_release,           // yes - for last close call?
+        .fsync = sjfs_fops_fsync,
+        .aio_fsync = sjfs_fops_aio_fsync,
+        .fasync = sjfs_fops_fasync,
+        .lock = sjfs_fops_lock,
+        .sendpage = sjfs_fops_sendpage,
+        .get_unmapped_area = sjfs_fops_get_unmapped_area,
+        .check_flags = sjfs_fops_check_flags,
+        .flock = sjfs_fops_flock,
+        .splice_write = sjfs_fops_splice_write,
+        .splice_read = sjfs_fops_splice_read,
+        .setlease = sjfs_fops_setlease,
+        .fallocate = sjfs_fops_fallocate,
+        .show_fdinfo = sjfs_fops_show_fdinfo,
 };
 
 // - super block level -----------------------------------------------------------------------------
