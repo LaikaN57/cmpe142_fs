@@ -51,15 +51,16 @@ These are some links to different file systems that can be used for reference.
 
 ## Previous Semester's Work
 This is work from students in previous semesters including their references. This code cannot be trusted to work.
-* [alexanderkoumis/basedfs](https://github.com/alexanderkoumis/basedfs)
+* [alexanderkoumis/basedfs](https://github.com/alexanderkoumis/basedfs) - writes but does not read?
 * [mwcarlis/Thunder_FS](https://github.com/mwcarlis/Thunder_FS)
-* [mschneider90/cmpe142](https://github.com/mschneider90/cmpe142)
+* [mschneider90/cmpe142](https://github.com/mschneider90/cmpe142) - just saves data to RAM
   * https://casper.berkeley.edu/svn/trunk/roach/sw/linux/security/inode.c
   * http://www.win.tue.nl/~aeb/linux/lk/lk-8.html
   * http://www.tldp.org/LDP/khg/HyperNews/get/fs/vfstour.html
   * http://lwn.net/Articles/57369/
 
 ## Other Information
+* [Ext4 Disk Layout](https://ext4.wiki.kernel.org/index.php/Ext4_Disk_Layout)
 * [Robert Love - Linux Kernel Development 2nd Ed.](http://www.makelinux.net/books/lkd2/ch12)
 * [How to Write Your Own Linux Kernel Module with a Simple Example](http://www.thegeekstuff.com/2013/07/write-linux-kernel-module/)
 * [theurbanpenguin - LINUX Understanding inodes](https://www.youtube.com/watch?v=_6VJ8WfWI4k)
