@@ -85,31 +85,18 @@ int sjfs_iops_tmpfile(struct inode *i, struct dentry *d, umode_t t) { printk("sj
 int sjfs_iops_set_acl(struct inode *i, struct posix_acl *p, int a) { printk("sjfs_iops_set_acl\n"); return 0; }
 
 struct inode_operations sjfs_iops = {
-	.lookup = sjfs_iops_lookup, // Found in github/ms version (simple)
-	//.follow_link = sjfs_iops_follow_link,
 	.permission = sjfs_iops_permission,
 	//.posix_acl = sjfs_iops_posix_acl,
-	.readlink = sjfs_iops_readlink,
-	//.put_link = sjfs_iops_put_link,
-	.create = sjfs_iops_create, // Found in github/ms version
-	.link = sjfs_iops_link, // Found in github/ms version (simple)
-	.unlink = sjfs_iops_unlink, // Found in github/ms version (simple)
-	.symlink = sjfs_iops_symlink,
-	.mkdir = sjfs_iops_mkdir,
-	.rmdir = sjfs_iops_rmdir,
-	.mknod = sjfs_iops_mknod, // Found in github/ms version
-	.rename = sjfs_iops_rename, // Found in github/ms version (simple)
+	.create = sjfs_iops_create,		// yes - for open call (touch)
+	.unlink = sjfs_iops_unlink,		// yes - for unlink call (rm)
+	.rename = sjfs_iops_rename,		// yes - for rename call (mv?)
 	.rename2 = sjfs_iops_rename2,
-	.setattr = sjfs_iops_setattr, // simple (need to rewrite, see todo comment in def)
-	.getattr = sjfs_iops_getattr, // simple
-	.setxattr = sjfs_iops_setxattr,
-	.getxattr = sjfs_iops_getxattr,
-	.listxattr = sjfs_iops_listxattr,
-	.removexattr = sjfs_iops_removexattr,
+	.setattr = sjfs_iops_setattr,		// yes - for (chmod)
+	.getattr = sjfs_iops_getattr,		// yes - for (stat)
 	.fiemap = sjfs_iops_fiemap,
 	.update_time = sjfs_iops_update_time,
 	.atomic_open = sjfs_iops_atomic_open,
-	.tmpfile = sjfs_iops_tmpfile,
+	.tmpfile = sjfs_iops_tmpfile,		// no - optional
 	.set_acl = sjfs_iops_set_acl,
 };
 
@@ -177,7 +164,19 @@ struct file_operations sjfs_fops = {
 // - root directory level --------------------------------------------------------------------------
 
 struct inode_operations sjfs_root_dir_iops = {
-	.lookup = sjfs_iops_lookup,
+        .lookup = sjfs_iops_lookup,             // yes - to find a file 
+        .permission = sjfs_iops_permission,
+        //.posix_acl = sjfs_iops_posix_acl,
+        .create = sjfs_iops_create,             // yes - for open call (touch)
+        .unlink = sjfs_iops_unlink,             // yes - for unlink call (rm)
+        .rename = sjfs_iops_rename,             // yes - for rename call (mv?)
+        .rename2 = sjfs_iops_rename2,
+        .setattr = sjfs_iops_setattr,           // yes - for (chmod)
+        .getattr = sjfs_iops_getattr,           // yes - for (stat)
+        .fiemap = sjfs_iops_fiemap,
+        .update_time = sjfs_iops_update_time,
+        .atomic_open = sjfs_iops_atomic_open,
+        .set_acl = sjfs_iops_set_acl,
 };
 
 struct file_operations sjfs_root_dir_fops = {
