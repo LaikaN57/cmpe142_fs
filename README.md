@@ -60,6 +60,7 @@ This is work from students in previous semesters including their references. Thi
   * http://lwn.net/Articles/57369/
 
 ## Other Information
+* [Ext4 Disk Layout](https://ext4.wiki.kernel.org/index.php/Ext4_Disk_Layout)
 * [Robert Love - Linux Kernel Development 2nd Ed.](http://www.makelinux.net/books/lkd2/ch12)
 * [How to Write Your Own Linux Kernel Module with a Simple Example](http://www.thegeekstuff.com/2013/07/write-linux-kernel-module/)
 * [theurbanpenguin - LINUX Understanding inodes](https://www.youtube.com/watch?v=_6VJ8WfWI4k)
