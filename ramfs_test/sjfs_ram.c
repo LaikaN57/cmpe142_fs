@@ -30,7 +30,8 @@ ssize_t sjfs_fops_read_iter(struct kiocb *k, struct iov_iter *i) {
 	return generic_file_read_iter(k, i);
 }
 ssize_t sjfs_fops_write_iter(struct kiocb *k, struct iov_iter *i) {
-	printk("sjfs_fops_write_iter -> generic_file_write_iter\n");
+	printk("sjfs_fops_write_iter -> generic_file_write_iter(\n");
+	printk(")\n");
 	return generic_file_write_iter(k, i);
 }
 int sjfs_fops_mmap(struct file *f, struct vm_area_struct *v) {
