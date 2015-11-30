@@ -45,7 +45,7 @@ int sjfs_iops_permission(struct inode *inode, int mask) {
 	
 	return generic_permission(inode, mask);
 }
-struct posix_acl * sjfs_iops_posix_acl(struct inode *i, int a) { printk("sjfs_iops_posix_acl\n"); return NULL; }
+struct posix_acl * sjfs_iops_get_acl(struct inode *i, int a) { printk("sjfs_iops_posix_acl\n"); return NULL; }
 int sjfs_iops_readlink(struct dentry *d, char __user *u,int i) { printk("sjfs_iops_readlink\n"); return 0; }
 void sjfs_iops_put_link(struct inode *i, void *v) { printk("sjfs_iops_put_link\n"); }
 int sjfs_iops_create(struct inode *i,struct dentry *d, umode_t u, bool b) { printk("sjfs_iops_create\n"); return 0; }
@@ -56,7 +56,11 @@ int sjfs_iops_mkdir(struct inode *i,struct dentry *d,umode_t u) { printk("sjfs_i
 int sjfs_iops_rmdir(struct inode *i,struct dentry *d) { printk("sjfs_iops_rmdir\n"); return 0; }
 int sjfs_iops_mknod(struct inode *i,struct dentry *d,umode_t u,dev_t d2) { printk("sjfs_iops_mknod\n"); return 0; }
 int sjfs_iops_rename(struct inode *i, struct dentry *d, struct inode *i2, struct dentry *d2) { printk("sjfs_iops_rename\n"); return 0; }
-int sjfs_iops_rename2(struct inode *i, struct dentry *d, struct inode *i2, struct dentry *d2, unsigned int ui) { printk("sjfs_iops_rename2\n"); return 0; }
+int sjfs_iops_rename2(struct inode *i, struct dentry *d, struct inode *i2, struct dentry *d2, unsigned int flags) {
+	printk("sjfs_iops_rename2\n");
+
+	return 0;
+}
 int sjfs_iops_setattr(struct dentry *dentry, struct iattr *iattr) {
 	printk("sjfs_iops_setattr -> simple_setattr (for testing only)\n");
 
@@ -86,15 +90,12 @@ int sjfs_iops_set_acl(struct inode *i, struct posix_acl *p, int a) { printk("sjf
 
 struct inode_operations sjfs_iops = {
 	.permission = sjfs_iops_permission,
-	//.posix_acl = sjfs_iops_posix_acl,
+	.get_acl = sjfs_iops_get_acl,
 	.unlink = sjfs_iops_unlink,		// yes - for unlink call (rm)
 	.rename = sjfs_iops_rename,		// yes - for rename call (mv?)
-	.rename2 = sjfs_iops_rename2,
 	.setattr = sjfs_iops_setattr,		// yes - for (chmod)
 	.getattr = sjfs_iops_getattr,		// yes - for (stat)
-	.fiemap = sjfs_iops_fiemap,
 	.update_time = sjfs_iops_update_time,
-	.atomic_open = sjfs_iops_atomic_open,
 	.set_acl = sjfs_iops_set_acl,
 };
 
@@ -139,7 +140,7 @@ struct file_operations sjfs_fops = {
 	.unlocked_ioctl = sjfs_fops_unlocked_ioctl,
 	.compat_ioctl = sjfs_fops_compat_ioctl,
 	.mmap = sjfs_fops_mmap,
-	//.mremap = sjfs_fops_mremap,
+	.mremap = sjfs_fops_mremap,
 	.open = sjfs_fops_open,
 	.flush = sjfs_fops_flush,
 	.release = sjfs_fops_release,
@@ -156,7 +157,6 @@ struct file_operations sjfs_fops = {
 	.setlease = sjfs_fops_setlease,
 	.fallocate = sjfs_fops_fallocate,
 	.show_fdinfo = sjfs_fops_show_fdinfo,
-	//.mmap_capabilities = sjfs_fops_mmap_capabilities,
 };
 
 // - root directory level --------------------------------------------------------------------------
@@ -164,16 +164,13 @@ struct file_operations sjfs_fops = {
 struct inode_operations sjfs_root_dir_iops = {
         .lookup = sjfs_iops_lookup,             // yes - to find a file 
         .permission = sjfs_iops_permission,
-        //.posix_acl = sjfs_iops_posix_acl,
+        .get_acl = sjfs_iops_get_acl,
         .create = sjfs_iops_create,             // yes - for open call (touch)
         .unlink = sjfs_iops_unlink,             // yes - for unlink call (rm)
         .rename = sjfs_iops_rename,             // yes - for rename call (mv?)
-        .rename2 = sjfs_iops_rename2,
         .setattr = sjfs_iops_setattr,           // yes - for (chmod)
         .getattr = sjfs_iops_getattr,           // yes - for (stat)
-        .fiemap = sjfs_iops_fiemap,
         .update_time = sjfs_iops_update_time,
-        .atomic_open = sjfs_iops_atomic_open,
         .set_acl = sjfs_iops_set_acl,
 };
 
