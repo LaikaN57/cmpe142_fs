@@ -11,19 +11,32 @@ MODULE_VERSION("0:1.0.1");
 
 static unsigned char read_block_buffer[1024];
 
-// dummy function for netlink socket
 void cn_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp) {
-	printk("cn_callback %s: idx=%x, val=%x, seq=%u, ack=%u, len=%d: %s.\n", __func__, msg->id.idx, msg->id.val,
-			msg->seq, msg->ack, msg->len, msg->len ? (char *)msg->data : "");
+	// if we dont need a read, just do nothing
+	if(!down_trylock(&cb_sem)) {
+		up(&cb_sem); // FIXME: potential race
+		return;
+	}
 
-	memcpy(read_block_buffer, (unsigned char *) msg->data + 5, SJFS_BLOCK_SIZE);
+	// copy message to read_block_buffer
+	memcpy(read_block_buffer, (unsigned char *) msg->data, msg->len > SJFS_BLOCK_SIZE ? SJFS_BLOCK_SIZE : msg->len);
+
+	up(&cb_sem);
+
+	printk("cn_callback %s: idx=%x, val=%x, seq=%u, ack=%u, len=%d: %s.\n",
+			__func__, msg->id.idx, msg->id.val, msg->seq,
+			msg->ack, msg->len, msg->len ? (char *)msg->data : "");
 }
 
 // - socket level --------------------------------------------------------------------------
 
 // TODO: this is only a test function
 static int send_notify(void) {
-	// insert code to send data to user space app
+	down(&cn_sem);
+
+	// send write info to user space
+
+	up(&cn_sem);
 	return 0;
 }
 // reads a block from disk (handles all the socket calling)
