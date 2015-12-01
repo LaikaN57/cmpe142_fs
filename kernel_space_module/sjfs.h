@@ -26,5 +26,6 @@ static struct sock *nls;
 
 // netlink socket semaphore for read/write block
 static struct semaphore cn_sem;
+static struct semaphore cb_sem;
 
 #endif

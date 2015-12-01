@@ -25,7 +25,7 @@ typedef struct {
 	unsigned long mnt_count;
 	unsigned long magic;
 	unsigned char dirty;
-	unsigned char reserved[];
+	unsigned char reserved[SJFS_BLOCK_SIZE - 21];
 } superblock_t;
 
 typedef struct {

@@ -23,12 +23,31 @@ void cn_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp) {
 
 // reads a block from disk (handles all the socket calling)
 static int sjfs_read_block(unsigned int address, unsigned char * block) {
-	return -1;
+	down(&cn_sem);
+	down(&cb_sem);
+
+	// send read info to user space
+
+	// TODO: make this call do a timeout
+	down(&cb_sem); // returns when we get a callback
+	up(&cb_sem); // imediate release of sem
+
+	// copy read_block_buffer to block
+	memcpy(block, read_block_buffer, 1024);
+	up(&cn_sem);
+
+	return 0;
 }
 
 // writes a block to disk (handles all the socket calling)
 static int sjfs_write_block(unsigned int address, unsigned char * block) {
-	return -1;
+	down(&cn_sem);
+
+	// send write info to user space
+
+	up(&cn_sem);
+
+	return 0;
 }
 
 // reads a buffer from disk (this should handle all of the block looping)
@@ -59,9 +78,10 @@ static superblock_t * sjfs_get_disk_superblock(void) {
 }
 
 static inode_t * sjfs_get_disk_inode(unsigned int inode_number) {
-	unsigned char block_buffer[1024];
+	unsigned char * block_buffer;
 	inode_t * disk_inode;
 
+	block_buffer = kmalloc(SJFS_BLOCK_SIZE, GFP_KERNEL);
 	// block number is going to be:
 	// B0: super
 	// B1: inode bitmap
@@ -69,11 +89,11 @@ static inode_t * sjfs_get_disk_inode(unsigned int inode_number) {
 	// B3: inodes: BS/sizeof(inode_t) to (2*BS/sizeof(inode_t)) - 1
 	// Bn: inodes: ...
 	// B = 2 + floor((ino * size) / BS)
-	if(sjfs_read_block(2 + ((inode_number * sizeof(inode_t)) / SJFS_BLOCK_SIZE), block_buffer) < 0) {
+	if(!block_buffer || sjfs_read_block(2 + ((inode_number * sizeof(inode_t)) / SJFS_BLOCK_SIZE), block_buffer) < 0) {
 		return NULL;
 	}
         disk_inode = kmalloc(sizeof(inode_t), GFP_KERNEL);
-        memcpy(disk_inode, block_buffer, sizeof(inode_t));
+        memcpy(disk_inode, (block_buffer + (inode_number * sizeof(inode_t))), sizeof(inode_t));
 
         return disk_inode;
 }
@@ -210,27 +230,14 @@ unsigned sjfs_fops_mmap_capabilities(struct file *f) { printk("sjfs_fops_mmap_ca
 struct file_operations sjfs_file_fops = {
 	.owner = THIS_MODULE,			// yes - informational
 	.llseek = sjfs_fops_llseek,
-	.read = sjfs_fops_read,			// yes - for read call
-	.write = sjfs_fops_write,		// yes - for write call
-	.read_iter = sjfs_fops_read_iter,
-	.write_iter = sjfs_fops_write_iter,
+	.read = sjfs_fops_read,			// yes - for read call on self
+	.write = sjfs_fops_write,		// yes - for write call on self
 	.poll = sjfs_fops_poll,
-	.unlocked_ioctl = sjfs_fops_unlocked_ioctl,
-	.mmap = sjfs_fops_mmap,
-	.mremap = sjfs_fops_mremap,
-	.open = sjfs_fops_open,			// yes - for open call
-	.flush = sjfs_fops_flush,		// yes - for close call
-	.release = sjfs_fops_release,		// yes - for last close call?
-	.fsync = sjfs_fops_fsync,
-	.aio_fsync = sjfs_fops_aio_fsync,
-	.fasync = sjfs_fops_fasync,
+	.open = sjfs_fops_open,			// yes - for open call on self
+	.release = sjfs_fops_release,		// yes - for last close call on self
 	.lock = sjfs_fops_lock,
-	.sendpage = sjfs_fops_sendpage,
-	.get_unmapped_area = sjfs_fops_get_unmapped_area,
 	.check_flags = sjfs_fops_check_flags,
 	.flock = sjfs_fops_flock,
-	.splice_write = sjfs_fops_splice_write,
-	.splice_read = sjfs_fops_splice_read,
 	.setlease = sjfs_fops_setlease,
 	.fallocate = sjfs_fops_fallocate,
 	.show_fdinfo = sjfs_fops_show_fdinfo,
@@ -254,26 +261,14 @@ struct file_operations sjfs_root_dir_fops = {
         .llseek = sjfs_fops_llseek,
         .read = sjfs_fops_read,                 // yes - for read call
         .write = sjfs_fops_write,               // yes - for write call
-        .read_iter = sjfs_fops_read_iter,
-        .write_iter = sjfs_fops_write_iter,
         .iterate = sjfs_fops_iterate,           // yes - read dir
         .poll = sjfs_fops_poll,
-        .unlocked_ioctl = sjfs_fops_unlocked_ioctl,
-        .mmap = sjfs_fops_mmap,
-        .mremap = sjfs_fops_mremap,
         .open = sjfs_fops_open,                 // yes - for open call
         .flush = sjfs_fops_flush,               // yes - for close call
         .release = sjfs_fops_release,           // yes - for last close call?
-        .fsync = sjfs_fops_fsync,
-        .aio_fsync = sjfs_fops_aio_fsync,
-        .fasync = sjfs_fops_fasync,
         .lock = sjfs_fops_lock,
-        .sendpage = sjfs_fops_sendpage,
-        .get_unmapped_area = sjfs_fops_get_unmapped_area,
         .check_flags = sjfs_fops_check_flags,
         .flock = sjfs_fops_flock,
-        .splice_write = sjfs_fops_splice_write,
-        .splice_read = sjfs_fops_splice_read,
         .setlease = sjfs_fops_setlease,
         .fallocate = sjfs_fops_fallocate,
         .show_fdinfo = sjfs_fops_show_fdinfo,
@@ -428,6 +423,7 @@ int __init_or_module sjfs_init(void) {
 		return -EBUSY;
 
 	sema_init(&cn_sem, 1);
+	sema_init(&cb_sem, 1);
 
 	// start user mode application
 	call_usermodehelper(helper_argv[0], helper_argv, NULL, UMH_WAIT_EXEC);
