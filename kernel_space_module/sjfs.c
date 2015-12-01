@@ -10,6 +10,7 @@ MODULE_DESCRIPTION("San Jose Filesystem");
 MODULE_VERSION("0:1.0.1");
 
 static unsigned char read_block_buffer[1024];
+static u32 cn_counter;
 
 void cn_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp) {
 	// if we dont need a read, just do nothing
@@ -32,26 +33,61 @@ void cn_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp) {
 
 // TODO: this is only a test function
 static int send_notify(void) {
-	down(&cn_sem);
+	struct cn_msg *m;
+	char data[32];
 
-	// send write info to user space
+	m = kzalloc(sizeof(*m) + sizeof(data), GFP_ATOMIC);
+	if (m) {
+		memcpy(&m->id, &cn_id, sizeof(m->id));
+		m->seq = cn_counter;
+		m->len = scnprintf(data, sizeof(data), "counter = %u", cn_counter) + 1;
 
-	up(&cn_sem);
+		memcpy(m + 1, data, m->len);
+
+		down(&cn_sem);
+
+		cn_netlink_send(m, 0, 0, GFP_ATOMIC);
+
+		up(&cn_sem);
+
+		kfree(m);
+	}
+
+	cn_counter++;
+
 	return 0;
 }
+
 // reads a block from disk (handles all the socket calling)
 static int sjfs_read_block(unsigned int address, unsigned char * block) {
-	down(&cn_sem);
-	down(&cb_sem);
+	struct cn_msg *m;
+	unsigned char data[5];
 
-	// send read info to user space
+	// TODO:fix this to actually do what is is supposed to
+	m = kzalloc(sizeof(*m) + 5, GFP_ATOMIC);
+	if (m) {
+		memcpy(&m->id, &cn_id, sizeof(m->id));
+		m->seq = cn_counter;
+		m->len = scnprintf(data, sizeof(data), "%c%u", SJFS_OPCODE_READ, address) + 1;
+
+		memcpy(m + 1, data, m->len);
+
+		down(&cn_sem);
+		down(&cb_sem);
+
+		cn_netlink_send(m, 0, 0, GFP_ATOMIC);
+	
+		kfree(m);
+	}
+
+	cn_counter++;
 
 	// TODO: make this call do a timeout
 	down(&cb_sem); // returns when we get a callback
 	up(&cb_sem); // imediate release of sem
 
 	// copy read_block_buffer to block
-	memcpy(block, read_block_buffer, 1024);
+	memcpy(block, read_block_buffer, SJFS_BLOCK_SIZE);
 	up(&cn_sem);
 
 	return 0;
