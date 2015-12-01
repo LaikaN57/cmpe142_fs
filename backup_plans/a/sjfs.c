@@ -11,6 +11,7 @@
 #include <linux/slab.h>
 #include <asm/uaccess.h>
 #include <linux/mm.h>
+#include <linux/module.h>
 
 #define SJFS_MAGIC	0x534A5346
 
@@ -142,7 +143,6 @@ static const struct super_operations sjfs_ops = {
 
 int sjfs_fill_super(struct super_block *sb, void *data, int silent) {
 	struct inode *inode;
-	int err;
 
 	save_mount_options(sb, data);
 
