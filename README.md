@@ -59,6 +59,14 @@ This is work from students in previous semesters including their references. Thi
   * http://www.tldp.org/LDP/khg/HyperNews/get/fs/vfstour.html
   * http://lwn.net/Articles/57369/
 
+## Debugging
+* strace (user space tracing)
+  * [Ubuntu manuals - strace(1)](http://manpages.ubuntu.com/manpages/wily/en/man1/strace.1.html)
+* ftrace (kernel space tracing)
+  * [LWN.net - Debugging the kernel using Ftrace - part 1](https://lwn.net/Articles/365835/)
+  * [LWN.net - Debugging the kernel using Ftrace - part 2](https://lwn.net/Articles/366796/)
+  * `echo ":mod:<your_mod_name>" > set_ftrace_filter` is really useful.
+
 ## Other Information
 * [Ext4 Disk Layout](https://ext4.wiki.kernel.org/index.php/Ext4_Disk_Layout)
 * [Robert Love - Linux Kernel Development 2nd Ed.](http://www.makelinux.net/books/lkd2/ch12)
