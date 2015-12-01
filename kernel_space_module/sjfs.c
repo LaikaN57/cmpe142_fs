@@ -398,6 +398,11 @@ struct file_system_type sjfs_fs_type = {
 
 int __init_or_module sjfs_init(void) {
 	static unsigned long once;
+	char *helper_argv[] = {
+			"/usr/local/bin/sjfs_helper",
+			"/tmp/sjfs.img",
+			NULL
+	};
 
 	if (test_and_set_bit(0, &once))
 		return -EBUSY;
@@ -405,7 +410,7 @@ int __init_or_module sjfs_init(void) {
 	sema_init(&cn_sem, 1);
 
 	// start user mode application
-	//call_usermodehelper("/usr/local/bin/sjfs_helper", NULL, NULL, 0);
+	call_usermodehelper(helper_argv[0], helper_argv, NULL, UMH_WAIT_EXEC);
 
 	// register the filesystem
 	return register_filesystem(&sjfs_fs_type);

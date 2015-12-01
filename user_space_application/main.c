@@ -6,6 +6,10 @@
 #include <string.h>
 #include <unistd.h>
 
+// for protection against multiple running instances
+#include <sys/file.h>
+#include <errno.h>
+
 // netlink socket headers
 #include <asm/types.h>
 
@@ -180,6 +184,10 @@ int do_work(unsigned char * buffer) {
 }
 
 int main(int argc, char *argv[]) {
+	// for protection
+	int pid_file;
+	int rc;
+
 	// for getopts and file
 	int c;
 	int size;
@@ -194,6 +202,18 @@ int main(int argc, char *argv[]) {
 	struct sockaddr_nl l_local;
 	struct cn_msg *data;
 	struct pollfd pfd;
+
+	// protection
+	// ---------------------------------------------------------------------------------------------
+	// only allow a single instance of this program to be run at any given time
+
+	pid_file = open("/var/run/sjfs_helper.pid", O_CREAT | O_RDWR, 0666);
+	rc = flock(pid_file, LOCK_EX | LOCK_NB);
+	if(rc) {
+		if(EWOULDBLOCK == errno) {
+			exit(EXIT_FAILURE);
+		}
+	}
 
 	// parse command line options
 	// ---------------------------------------------------------------------------------------------
