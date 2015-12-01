@@ -21,6 +21,11 @@ void cn_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp) {
 
 // - socket level --------------------------------------------------------------------------
 
+// TODO: this is only a test function
+static int send_notify(void) {
+	// insert code to send data to user space app
+	return 0;
+}
 // reads a block from disk (handles all the socket calling)
 static int sjfs_read_block(unsigned int address, unsigned char * block) {
 	down(&cn_sem);
@@ -102,7 +107,7 @@ static void sjfs_set_disk_inode(struct inode * inode) {
 	// copy things from inode to disk inode in i_private
 
 	inode->i_ctime = CURRENT_TIME;
-	//((inode_t *) inode->i_private)->ctime = CURRENT_TIME.ctime;
+	((inode_t *) inode->i_private)->ctime = inode->i_ctime.tv_sec;
 
 	// read the block from disk
 	// save the inode
@@ -356,9 +361,9 @@ int sjfs_fill_super(struct super_block *sb, void *data, int silent) {
 	i_gid_write(inode, disk_root_inode->gid);
 	i_size_write(inode, disk_root_inode->size);
 	//TODO: fix casting these
-	//inode->i_atime	= disk_root_inode->atime;
-        //inode->i_mtime	= disk_root_inode->mtime;
-        //inode->i_ctime	= disk_root_inode->ctime;
+	inode->i_atime.tv_sec	= disk_root_inode->atime;
+        inode->i_mtime.tv_sec	= disk_root_inode->mtime;
+        inode->i_ctime.tv_sec	= disk_root_inode->ctime;
 	inode->i_blocks	= disk_root_inode->blocks;
 	inode->i_private = disk_root_inode;
 
