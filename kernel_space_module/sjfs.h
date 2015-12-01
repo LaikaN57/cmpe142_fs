@@ -11,7 +11,7 @@
 #include <linux/connector.h>
 
 // used for semeaphores
-#include <linux/semaphor.h>
+#include <linux/semaphore.h>
 
 // our includes
 #include "../include/ipc.h"

@@ -10,7 +10,7 @@ MODULE_DESCRIPTION("San Jose Filesystem");
 MODULE_VERSION("0:1.0.1");
 
 // dummy function for netlink socket
-static void cn_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp) {
+void cn_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp) {
 	printk("cn_callback %s: idx=%x, val=%x, seq=%u, ack=%u, len=%d: %s.\n", __func__, msg->id.idx, msg->id.val,
 			msg->seq, msg->ack, msg->len, msg->len ? (char *)msg->data : "");
 }
@@ -18,23 +18,71 @@ static void cn_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp) {
 // - socket level --------------------------------------------------------------------------
 
 // reads a block from disk (handles all the socket calling)
-int sjfs_read_block(unsigned int address, unsigned char * block) {
+static int sjfs_read_block(unsigned int address, unsigned char * block) {
 	return -1;
 }
 
 // writes a block to disk (handles all the socket calling)
-int sjfs_write_block(unsigned int address, unsigned char * block) {
+static int sjfs_write_block(unsigned int address, unsigned char * block) {
 	return -1;
 }
 
 // reads a buffer from disk (this should handle all of the block looping)
-int sjfs_read_buffer(unsigned int offset, unsigned int len, unsigned char * buffer) {
+static int sjfs_read_buffer(unsigned int offset, unsigned int len, unsigned char * buffer) {
 	return -1;
 }
 
 // writes a buffer to disk (this should handle all of the block looping)
-int sjfs_write_buffer(unsigned int offset, unsigned int len, unsigned char * buffer) {
+static int sjfs_write_buffer(unsigned int offset, unsigned int len, unsigned char * buffer) {
 	return -1;
+}
+
+static superblock_t * sjfs_get_disk_superblock(void) {
+	unsigned char * block_zero_buffer;
+	superblock_t * disk_sb;
+
+	block_zero_buffer = kmalloc(sizeof(SJFS_BLOCK_SIZE), GFP_KERNEL);
+	if(!block_zero_buffer || sjfs_read_block(0, block_zero_buffer) < 0) {
+		return NULL;
+	}
+
+	disk_sb = kmalloc(sizeof(superblock_t), GFP_KERNEL);
+	memcpy(disk_sb, block_zero_buffer, sizeof(superblock_t));
+
+	kfree(block_zero_buffer);
+	
+	return disk_sb;
+}
+
+static inode_t * sjfs_get_disk_inode(unsigned int inode_number) {
+	unsigned char block_buffer[1024];
+	inode_t * disk_inode;
+
+	// block number is going to be:
+	// B0: super
+	// B1: inode bitmap
+	// B2: inodes: 0 to (BS/sizeof(inode_t)) - 1
+	// B3: inodes: BS/sizeof(inode_t) to (2*BS/sizeof(inode_t)) - 1
+	// Bn: inodes: ...
+	// B = 2 + floor((ino * size) / BS)
+	if(sjfs_read_block(2 + ((inode_number * sizeof(inode_t)) / SJFS_BLOCK_SIZE), block_buffer) < 0) {
+		return NULL;
+	}
+        disk_inode = kmalloc(sizeof(inode_t), GFP_KERNEL);
+        memcpy(disk_inode, block_buffer, sizeof(inode_t));
+
+        return disk_inode;
+}
+
+static void sjfs_set_disk_inode(struct inode * inode) {
+	// copy things from inode to disk inode in i_private
+
+	inode->i_ctime = CURRENT_TIME;
+	//((inode_t *) inode->i_private)->ctime = CURRENT_TIME.ctime;
+
+	// read the block from disk
+	// save the inode
+	// write the block to disk
 }
 
 // - syscall level -----------------------------------------------------------------------------------
@@ -91,13 +139,11 @@ int sjfs_iops_set_acl(struct inode *i, struct posix_acl *p, int a) { printk("sjf
 
 struct inode_operations sjfs_iops = {
 	.permission = sjfs_iops_permission,
-	.get_acl = sjfs_iops_get_acl,
 	.unlink = sjfs_iops_unlink,		// yes - for unlink call (rm)
 	.rename = sjfs_iops_rename,		// yes - for rename call (mv?)
 	.setattr = sjfs_iops_setattr,		// yes - for (chmod)
 	.getattr = sjfs_iops_getattr,		// yes - for (stat)
 	.update_time = sjfs_iops_update_time,
-	.set_acl = sjfs_iops_set_acl,
 };
 
 loff_t sjfs_fops_llseek(struct file *f, loff_t l, int i) { printk("sjfs_fops_llseek\n"); return 0; }
@@ -142,7 +188,7 @@ void sjfs_fops_show_fdinfo(struct seq_file *m, struct file *f) { printk("sjfs_fo
 unsigned sjfs_fops_mmap_capabilities(struct file *f) { printk("sjfs_fops_mmap_capabilities\n"); return 0; }
 
 struct file_operations sjfs_fops = {
-	.owner = THIS_MODULE,
+	.owner = THIS_MODULE,			// yes - informational
 	.llseek = sjfs_fops_llseek,
 	.read = sjfs_fops_read,			// yes - for read call
 	.write = sjfs_fops_write,		// yes - for write call
@@ -175,18 +221,16 @@ struct file_operations sjfs_fops = {
 struct inode_operations sjfs_root_dir_iops = {
         .lookup = sjfs_iops_lookup,             // yes - to find a file 
         .permission = sjfs_iops_permission,
-        .get_acl = sjfs_iops_get_acl,
         .create = sjfs_iops_create,             // yes - for open call (touch)
         .unlink = sjfs_iops_unlink,             // yes - for unlink call (rm)
         .rename = sjfs_iops_rename,             // yes - for rename call (mv?)
         .setattr = sjfs_iops_setattr,           // yes - for (chmod)
         .getattr = sjfs_iops_getattr,           // yes - for (stat)
         .update_time = sjfs_iops_update_time,
-        .set_acl = sjfs_iops_set_acl,
 };
 
 struct file_operations sjfs_root_dir_fops = {
-        .owner = THIS_MODULE,
+        .owner = THIS_MODULE,			// yes - informational
         .llseek = sjfs_fops_llseek,
         .read = sjfs_fops_read,                 // yes - for read call
         .write = sjfs_fops_write,               // yes - for write call
@@ -252,27 +296,56 @@ struct super_operations sjfs_sops = { // TODO: look up which functions we are re
 int sjfs_fill_super(struct super_block *sb, void *data, int silent) {
 	struct inode *inode;
 	struct dentry *root;
+	superblock_t * disk_sb;
+	inode_t * disk_root_inode;
 
-	sb->s_maxbytes = MAX_LFS_FILESIZE;
-	sb->s_blocksize = PAGE_CACHE_SIZE;
-	sb->s_blocksize_bits = PAGE_CACHE_SHIFT;
-	sb->s_magic = SJFS_MAGIC;
-	sb->s_op = &sjfs_sops;
-	sb->s_time_gran = 1;
-	
+	disk_sb = sjfs_get_disk_superblock();
+	if(!disk_sb) {
+		return -ENOMEM;
+	}
+
+	// statically set info
+	sb->s_blocksize_bits	= 8;
+	sb->s_blocksize		= SJFS_BLOCK_SIZE;
+	sb->s_maxbytes		= MAX_LFS_FILESIZE;
+        sb->s_time_gran		= 1;
+
+        sb->s_op                = &sjfs_sops; // operations
+
+	// dynamic inits based on the on-disk super block
+	sb->s_magic	= disk_sb->magic;
+	sb->s_fs_info	= disk_sb;
+
 	save_mount_options(sb, data); // for generic_show_options
+
+	disk_root_inode = sjfs_get_disk_inode(0);
+
+	if(!disk_root_inode) {
+		return -ENOMEM;
+	}
 
 	inode = new_inode(sb);
 	if (!inode)
 		return -ENOMEM;
 
-	inode->i_ino = 1;
-	inode->i_mode = S_IFDIR | S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH; // octal bitmask of file type and permissions 040755
-	inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
-	inode->i_op = &sjfs_root_dir_iops;
-	inode->i_fop = &sjfs_root_dir_fops;
-
+	// statically set info for root directory inode
+	inode->i_ino	= 0;
 	set_nlink(inode, 2);
+
+	inode->i_op	= &sjfs_root_dir_iops; // root dir operations
+        inode->i_fop	= &sjfs_root_dir_fops;
+
+	// dynamically set based on the on-disk inode
+	inode->i_mode	= disk_root_inode->mode; // S_IFDIR | S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH
+	i_uid_write(inode, disk_root_inode->uid);
+	i_gid_write(inode, disk_root_inode->gid);
+	i_size_write(inode, disk_root_inode->size);
+	//TODO: fix casting these
+	//inode->i_atime	= disk_root_inode->atime;
+        //inode->i_mtime	= disk_root_inode->mtime;
+        //inode->i_ctime	= disk_root_inode->ctime;
+	inode->i_blocks	= disk_root_inode->blocks;
+	inode->i_private = disk_root_inode;
 
 	root = d_make_root(inode);
 	if (!root)
@@ -291,17 +364,14 @@ struct dentry * sjfs_mount(struct file_system_type *fs_type, int flags, const ch
 	// TODO: replace with actual callback code
 	err = cn_add_callback(&cn_id, cn_name, cn_callback);
 	if(err) {
-		goto err_out;
+		if(nls && nls->sk_socket) {
+			sock_release(nls->sk_socket);
+		}
+		return NULL;
 	}
 
 	// mount to a single place with no device
 	return mount_single(fs_type, flags, data, sjfs_fill_super);
-
-err_out:
-        if(nls && nls->sk_socket) {
-                sock_release(nls->sk_socket);
-        }
-	return NULL;
 }
 
 void sjfs_kill_sb(struct super_block *sb) {
@@ -348,3 +418,4 @@ void __exit sjfs_exit(void) {
 
 module_init(sjfs_init);
 module_exit(sjfs_exit);
+
