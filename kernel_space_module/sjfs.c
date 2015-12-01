@@ -89,7 +89,7 @@ static void sjfs_set_disk_inode(struct inode * inode) {
 	// write the block to disk
 }
 
-// - syscall level -----------------------------------------------------------------------------------
+// - file level -----------------------------------------------------------------------------------
 
 /*
 const char * sjfs_iops_follow_link(struct dentry *d, void **v) { printk("sjfs_iops_follow_link\n"); return NULL; }
@@ -112,11 +112,29 @@ int sjfs_iops_tmpfile(struct inode *i, struct dentry *d, umode_t t) { printk("sj
 int sjfs_iops_set_acl(struct inode *i, struct posix_acl *p, int a) { printk("sjfs_iops_set_acl\n"); return 0; }
 */
 
-struct dentry * sjfs_iops_lookup(struct inode *i,struct dentry *d, unsigned int ui) { printk("sjfs_iops_lookup\n"); return NULL; }
-int sjfs_iops_create(struct inode *i,struct dentry *d, umode_t u, bool b) { printk("sjfs_iops_create\n"); return 0; }
-int sjfs_iops_unlink(struct inode *i,struct dentry *d) { printk("sjfs_iops_unlink\n"); return 0; }
-int sjfs_iops_rename(struct inode *i, struct dentry *d, struct inode *i2, struct dentry *d2) { printk("sjfs_iops_rename\n"); return 0; }
+// root directory ONLY iops
+struct dentry * sjfs_iops_lookup(struct inode *dir,struct dentry *dentry, unsigned int flags) {
+	printk("sjfs_iops_lookup\n");
 
+	return NULL;
+}
+int sjfs_iops_create(struct inode *dir,struct dentry *dentry, umode_t mode, bool excl) {
+	printk("sjfs_iops_create\n");
+
+	return 0;
+}
+int sjfs_iops_unlink(struct inode *dir,struct dentry *dentry) {
+	printk("sjfs_iops_unlink\n");
+
+	return 0;
+}
+int sjfs_iops_rename(struct inode *old_dir, struct dentry *old_dentry, struct inode *new_dir, struct dentry *new_dentry) {
+	printk("sjfs_iops_rename\n");
+
+	return 0;
+}
+
+// shared iops
 int sjfs_iops_permission(struct inode *inode, int mask) {
         printk("sjfs_iops_permission -> generic_permission(i=%lu, m=%#010x)\n", inode->i_ino, mask);
 
@@ -141,7 +159,7 @@ int sjfs_iops_update_time(struct inode *inode, struct timespec *time, int flags)
 	return 0;
 }
 
-struct inode_operations sjfs_iops = {
+struct inode_operations sjfs_file_iops = {
 	.permission = sjfs_iops_permission,	// for () changes own permissions
 	.setattr = sjfs_iops_setattr,		// for (chmod) change own attributes
 	.getattr = sjfs_iops_getattr,		// for (stat) get own attributes
@@ -189,7 +207,7 @@ long sjfs_fops_fallocate(struct file *file, int mode, loff_t offset, loff_t len)
 void sjfs_fops_show_fdinfo(struct seq_file *m, struct file *f) { printk("sjfs_fops_show_fdinfo\n"); }
 unsigned sjfs_fops_mmap_capabilities(struct file *f) { printk("sjfs_fops_mmap_capabilities\n"); return 0; }
 
-struct file_operations sjfs_fops = {
+struct file_operations sjfs_file_fops = {
 	.owner = THIS_MODULE,			// yes - informational
 	.llseek = sjfs_fops_llseek,
 	.read = sjfs_fops_read,			// yes - for read call
