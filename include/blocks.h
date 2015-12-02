@@ -19,13 +19,13 @@
 
 typedef struct {
 	unsigned short inodes_count;
-	unsigned short blocks_count;
+	unsigned long data_blocks_count;
 	unsigned long mtime;
 	unsigned long wtime;
 	unsigned long mnt_count;
 	unsigned long magic;
 	unsigned char dirty;
-	unsigned char reserved[SJFS_BLOCK_SIZE - 21];
+	unsigned char reserved[SJFS_BLOCK_SIZE - 23];
 } superblock_t;
 
 typedef struct {

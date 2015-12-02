@@ -245,7 +245,7 @@ ssize_t sjfs_fops_read(struct file *file, char __user *to, size_t count, loff_t 
 	printk("sjfs_fops_read\n");
 	
 	// see simple_read_from_buffer where "from" is our user space app.
-	
+
 	return 0;
 }
 ssize_t sjfs_fops_write(struct file *f, const char __user *from, size_t count, loff_t *ppos) {
@@ -257,7 +257,7 @@ ssize_t sjfs_fops_write(struct file *f, const char __user *from, size_t count, l
 }
 ssize_t sjfs_fops_read_iter(struct kiocb *k, struct iov_iter *i) { printk("sjfs_fops_read_iter\n"); return 0; }
 ssize_t sjfs_fops_write_iter(struct kiocb *k, struct iov_iter *i) { printk("sjfs_fops_write_iter\n"); return 0; }
-int sjfs_fops_iterate(struct file *f, struct dir_context *d) { printk("sjfs_fops_iterate\n"); return 0; }
+int sjfs_fops_iterate(struct file *dir, struct dir_context *ctx) { printk("sjfs_fops_iterate\n"); return 0; }
 unsigned int sjfs_fops_poll(struct file *f, struct poll_table_struct *p) { printk("sjfs_fops_poll\n"); return 0; }
 long sjfs_fops_unlocked_ioctl(struct file *f, unsigned int ui, unsigned long ul) { printk("sjfs_fops_unlocked_ioctl\n"); return 0; }
 long sjfs_fops_compat_ioctl(struct file *f, unsigned int ui, unsigned long ul) { printk("sjfs_fops_compat_ioctl\n"); return 0; }
@@ -315,7 +315,7 @@ struct file_operations sjfs_root_dir_fops = {
         .llseek = sjfs_fops_llseek,
         .read = sjfs_fops_read,                 // yes - for read call
         .write = sjfs_fops_write,               // yes - for write call
-        .iterate = sjfs_fops_iterate,           // yes - read dir
+        .iterate = sjfs_fops_iterate,           // yes - for readdir call (ls) read self
         .poll = sjfs_fops_poll,
         .open = sjfs_fops_open,                 // yes - for open call
         .flush = sjfs_fops_flush,               // yes - for close call
