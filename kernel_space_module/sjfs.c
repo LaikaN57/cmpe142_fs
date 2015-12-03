@@ -5,7 +5,7 @@ MODULE_AUTHOR("Farbod Jahan <>");
 MODULE_AUTHOR("Alex Kennedy <alexzanderkennedy@gmail.com>");
 MODULE_AUTHOR("Patrick-Daniel Llanes <>");
 MODULE_AUTHOR("Jonathan Lo <>");
-MODULE_AUTHOR("Onyema Ude <>");
+MODULE_AUTHOR("Onyema Ude <udeonyema@gmail.com>");
 MODULE_DESCRIPTION("San Jose Filesystem");
 MODULE_VERSION("0:1.0.1");
 
