@@ -48,7 +48,10 @@ static unsigned char * sjfs_read_buffer;
 static void cn_sjfs_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp) {
 	sjfs_response_packet_t * packet;
 
-	// TODO add cb sem protection
+	if(!down_trylock(&cb_sem)) {
+		up(&cb_sem); // FIXME: potential race
+		return;
+	}
 
 	packet = (sjfs_response_packet_t *) msg->data;
 
@@ -56,6 +59,8 @@ static void cn_sjfs_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp) 
 	if(sjfs_read_buffer) {
 		memcpy(sjfs_read_buffer, packet->data, packet->count);
 	}
+
+	up(&cb_sem);
 }
 
 static const struct inode_operations sjfs_dir_inode_operations;
@@ -70,6 +75,7 @@ static ssize_t sjfs_fops_read(struct file *f, char __user *to, size_t count, lof
 	};
 
 	down(&cn_sem);
+	down(&cb_sem);
 
 	m = kzalloc(sizeof(*m) + sizeof(packet), GFP_ATOMIC);
 	if(m) {
@@ -84,7 +90,10 @@ static ssize_t sjfs_fops_read(struct file *f, char __user *to, size_t count, lof
 
 	cn_sjfs_counter++;
 
-	// TODO: wait for response
+	down(&cb_sem);
+	up(&cb_sem);
+
+	// TODO: copy data to user
 
 	up(&cn_sem);
 
