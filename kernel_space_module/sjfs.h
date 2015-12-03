@@ -23,9 +23,13 @@
 static struct cb_id cn_id = { CN_NETLINK_USERS + 3, 0x456 };
 static char cn_name[] = "sjfs";
 static struct sock *nls;
+static u32 cn_counter;
 
 // netlink socket semaphore for read/write block
 static struct semaphore cn_sem;
 static struct semaphore cb_sem;
+
+// use for block reads
+static unsigned char read_block_buffer[1024];
 
 #endif

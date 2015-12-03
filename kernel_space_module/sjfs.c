@@ -9,9 +9,6 @@ MODULE_AUTHOR("Onyema Ude <>");
 MODULE_DESCRIPTION("San Jose Filesystem");
 MODULE_VERSION("0:1.0.1");
 
-static unsigned char read_block_buffer[1024];
-static u32 cn_counter;
-
 void cn_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp) {
 	// if we dont need a read, just do nothing
 	if(!down_trylock(&cb_sem)) {
@@ -102,16 +99,6 @@ static int sjfs_write_block(unsigned int address, unsigned char * block) {
 	up(&cn_sem);
 
 	return 0;
-}
-
-// reads a buffer from disk (this should handle all of the block looping)
-static int sjfs_read_buffer(unsigned int offset, unsigned int len, unsigned char * buffer) {
-	return -1;
-}
-
-// writes a buffer to disk (this should handle all of the block looping)
-static int sjfs_write_buffer(unsigned int offset, unsigned int len, unsigned char * buffer) {
-	return -1;
 }
 
 static superblock_t * sjfs_get_disk_superblock(void) {
@@ -212,6 +199,7 @@ int sjfs_iops_rename(struct inode *old_dir, struct dentry *old_dentry, struct in
 int sjfs_iops_permission(struct inode *inode, int mask) {
         printk("sjfs_iops_permission -> generic_permission(i=%lu, m=%#010x)\n", inode->i_ino, mask);
 
+	//TODO: set permissions in memroy and on disk
         return generic_permission(inode, mask);
 }
 int sjfs_iops_setattr(struct dentry *dentry, struct iattr *iattr) {
@@ -223,13 +211,13 @@ int sjfs_iops_setattr(struct dentry *dentry, struct iattr *iattr) {
 int sjfs_iops_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *stat) {
         printk("sjfs_iops_getattr -> simple_getattr\n");
 
-        // enentually calls generic_fillattr() in fs/stat.c
-        // simply copies inode data to stat data
+	// TODO: i think we can just ignore this because we can get the attributes from the in-mem inode
         return simple_getattr(mnt, dentry, stat);
 }
 int sjfs_iops_update_time(struct inode *inode, struct timespec *time, int flags) {
 	printk("sjfs_iops_update_time\n");
-	
+
+	// TODO: set whatever time in memory and on disk
 	return 0;
 }
 
@@ -356,7 +344,9 @@ int sjfs_sops_bdev_try_to_free_page(struct super_block*sb, struct page* p, gfp_t
 long sjfs_sops_nr_cached_objects(struct super_block *sb, struct shrink_control *sc) { printk("sjfs_sops_nr_cached_objects\n"); return 0; };
 long sjfs_sops_free_cached_objects(struct super_block *sb, struct shrink_control *sc) { printk("sjfs_sops_free_cached_objects\n"); return 0; };
 */
-struct super_operations sjfs_sops = { // TODO: look up which functions we are required to fill
+
+// TODO: look up which functions we are required to fill
+struct super_operations sjfs_sops = {
 	.drop_inode		= generic_delete_inode,
 	.statfs			= simple_statfs,
 	.show_options	= generic_show_options,
@@ -409,7 +399,6 @@ int sjfs_fill_super(struct super_block *sb, void *data, int silent) {
 	i_uid_write(inode, disk_root_inode->uid);
 	i_gid_write(inode, disk_root_inode->gid);
 	i_size_write(inode, disk_root_inode->size);
-	//TODO: fix casting these
 	inode->i_atime.tv_sec	= disk_root_inode->atime;
         inode->i_mtime.tv_sec	= disk_root_inode->mtime;
         inode->i_ctime.tv_sec	= disk_root_inode->ctime;
@@ -430,7 +419,6 @@ struct dentry * sjfs_mount(struct file_system_type *fs_type, int flags, const ch
 	int err;
 
 	// start up our link to the userspace app
-	// TODO: replace with actual callback code
 	err = cn_add_callback(&cn_id, cn_name, cn_callback);
 	if(err) {
 		if(nls && nls->sk_socket) {
