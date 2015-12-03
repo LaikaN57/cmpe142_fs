@@ -189,20 +189,35 @@ unsigned sjfs_fops_mmap_capabilities(struct file *f) { printk("sjfs_fops_mmap_ca
 // - iopc level --------------------------------------------------------------------------------------
 
 // root directory ONLY iops
-struct dentry * sjfs_iops_lookup(struct inode *dir,struct dentry *dentry, unsigned int flags) {
+struct dentry * sjfs_iops_lookup(struct inode *dir, struct dentry *dentry, unsigned int flags) {
         printk("sjfs_iops_lookup\n");
 
-        return NULL;
+	
+        return simple_lookup(dir, dentry, flags);
 }
-int sjfs_iops_create(struct inode *dir,struct dentry *dentry, umode_t mode, bool excl) {
+int sjfs_iops_create(struct inode *dir, struct dentry *dentry, umode_t mode, bool excl) {
         printk("sjfs_iops_create\n");
 
         return 0;
 }
-int sjfs_iops_unlink(struct inode *dir,struct dentry *dentry) {
+int sjfs_iops_unlink(struct inode *dir, struct dentry *dentry) {
+	int inode_byte;
+	int inode_bit;
+	struct inode * inode	= d_inode(dentry);
+	struct timespec time;
         printk("sjfs_iops_unlink\n");
 
-        return 0;
+	// set the inode bitmap bit to 0
+	inode_bit = inode->i_ino % 8;
+	inode_byte = inode->i_ino - inode_bit;
+	inodes_bitmaps_cache[inode_byte] &= ~(1 << inode_bit);
+	sjfs_write_block(1, inodes_bitmaps_cache);
+
+	// update ctime / mtime on dir
+	time = CURRENT_TIME;
+	dir->i_op->update_time(dir, &time, S_CTIME | S_ATIME);
+
+        return simple_unlink(dir, dentry);
 }
 int sjfs_iops_rename(struct inode *old_dir, struct dentry *old_dentry, struct inode *new_dir, struct dentry *new_dentry) {
         printk("sjfs_iops_rename\n");
