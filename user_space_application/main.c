@@ -6,6 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 
+
 // for protection against multiple running instances
 #include <sys/file.h>
 #include <errno.h>
@@ -30,6 +31,7 @@
 #include <errno.h>
 #include <time.h>
 #include <getopt.h>
+#include <signal.h>
 
 #include <linux/connector.h>
 
@@ -43,22 +45,10 @@
 #define CN_TEST_IDX             CN_NETLINK_USERS + 3
 #define CN_TEST_VAL             0x456
 
-struct cd_id
-{
-	uint32_t idx;
-	uint32_t val;
-};
-
-struct cn_msg
-{
-	struct cb_id id;
-
-	uint32_t seq;
-	uint32_t ack;
-	uint32_t len;
-};
-
-// TODO: SIGPIPE handler for socket?
+void sig_handler(int signum) {
+	printf("Signal error found by sig_handler.\n");
+	exit(EXIT_FAILURE);
+}
 
 // used to kill the main while loop
 static int need_exit;
@@ -220,6 +210,20 @@ int main(int argc, char *argv[]) {
 	struct sockaddr_nl l_local;
 	struct cn_msg *data;
 	struct pollfd pfd;
+ 
+	// signal termination handler
+	// ---------------------------------------------------------------------------------------------
+	// handle SIGPIPE for writing broken socket/pipe
+
+	struct sigaction sh;
+
+	sh.sa_handler = sig_handler;
+	sigemptyset(&sh.sa_mask);
+	sh.sa_flags = SA_RESTART;	// restart functions if interrupted by handler
+
+	if(sh.sa_handler == SIGPIPE) {
+		sigaction(SIGPIPE, SIG_IGN, NULL);
+	}
 
 	// protection
 	// ---------------------------------------------------------------------------------------------
@@ -342,8 +346,8 @@ int main(int argc, char *argv[]) {
 
 				printf("Netlink message data: [%x.%x] [%08u.%08u].\n", data->id.idx, data->id.val, data->seq, data->ack);
 
-				// do something with data
-				netlink_send(s, &data);				// DID: fix this call to only pass the payload
+				// pass payload
+				netlink_send(s, &data);			
 
 				if(do_work(data) < 0) {
 					printf("Warn failed to do_work.");
