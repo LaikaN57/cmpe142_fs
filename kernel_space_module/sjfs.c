@@ -307,6 +307,7 @@ int sjfs_fill_super(struct super_block *sb, void *data, int silent) {
 	superblock_t * disk_sb;
 	inode_t * disk_root_inode;
 	int i;
+	int datablocks_bitmaps_offset;
 
 	disk_sb = sjfs_get_disk_superblock();
 	if(!disk_sb) {
@@ -336,8 +337,9 @@ int sjfs_fill_super(struct super_block *sb, void *data, int silent) {
 
 	// read each datablock bitmap into the datablocks bitmap cache
 	datablocks_bitmaps_cache = kmalloc(SJFS_BLOCKSIZE * disk_sb->datablock_blocks_count, GFP_KERNEL);
-	for(i = 2 + SJFS_BLOCKSIZE*8; i < (2 + SJFS_BLOCKSIZE*8) + disk_sb->datablock_blocks_count; i++) {
-		sjfs_read_block(i, datablocks_bitmaps_cache + (i - (2 + SJFS_BLOCKSIZE*8)) * SJFS_BLOCKSIZE);
+	datablocks_bitmaps_offset = 2 + SJFS_INODES_PER_BITMAP * 1; // FIXME: use inode count
+	for(i = datablocks_bitmaps_offset; i < datablocks_bitmaps_offset + disk_sb->datablock_blocks_count; i++) {
+		sjfs_read_block(i, datablocks_bitmaps_cache + (i - datablocks_bitmaps_offset) * SJFS_BLOCKSIZE);
 	}
 
 	// get and make our root inode
