@@ -28,16 +28,6 @@ MODULE_AUTHOR("Onyema Ude <>");
 MODULE_DESCRIPTION("San Jose Filesystem");
 MODULE_VERSION("0:1.1.1");
 
-int sjfs_writepage(struct page *page, struct writeback_control *wbc) {
-	printk("%s\n", __func__);
-
-	return -ENOMEM;
-}
-int sjfs_readpage(struct file *f, struct page *p) {
-	printk("%s\n", __func__);
-
-	return simple_readpage(f, p);
-}
 ssize_t sjfs_read(struct file *f, char __user *to, size_t count, loff_t *pos) {
 	printk("%s\n", __func__);
 
@@ -179,8 +169,6 @@ const struct file_operations sjfs_dir_operations = {
 	.read		= sjfs_dir_fops_read,
 	.iterate	= sjfs_dir_fops_iterate,
 	.fsync		= sjfs_dir_fops_fsync,
-        .read           = sjfs_read,
-        .write          = sjfs_write,
 };
 
 int sjfs_file_iops_setattr(struct dentry *dentry, struct iattr *iattr) {
@@ -254,7 +242,6 @@ static const struct address_space_operations ramfs2_aops = {
 	.write_begin	= sjfs_aops_write_begin,
 	.write_end	= sjfs_aops_write_end,
 	//.set_page_dirty	= __set_page_dirty_no_writeback,
-	.writepage	= sjfs_writepage,
 };
 
 struct inode *ramfs2_get_inode(struct super_block *sb, const struct inode *dir, umode_t mode, dev_t dev) {

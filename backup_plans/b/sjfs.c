@@ -64,13 +64,6 @@ static void cn_sjfs_send_func(void) {
 
 static const struct inode_operations sjfs_dir_inode_operations;
 
-static ssize_t sjfs_fops_read(struct file *f, char __user *to, size_t count, loff_t *ppos) {
-	return simple_read_from_buffer(to, count, ppos, void *from, size_t available);
-}
-static ssize_t sjfs_fops_write(struct file *f, const char __user *from, size_t count, loff_t *ppos) {
-	return simple_write_to_buffer(void *to, size_t available, ppos, from, count);
-}
-
 static const struct file_operations sjfs_file_operations = {
 	.read_iter	= generic_file_read_iter,
 	.write_iter	= generic_file_write_iter,
@@ -79,8 +72,6 @@ static const struct file_operations sjfs_file_operations = {
 	.splice_read	= generic_file_splice_read,
 	.splice_write	= iter_file_splice_write,
 	.llseek		= generic_file_llseek,
-	.read		= sjfs_fops_read,
-	.write		= sjfs_fops_write,
 };
 
 static const struct inode_operations sjfs_file_inode_operations = {
