@@ -28,6 +28,27 @@ MODULE_AUTHOR("Onyema Ude <>");
 MODULE_DESCRIPTION("San Jose Filesystem");
 MODULE_VERSION("0:1.1.1");
 
+int sjfs_writepage(struct page *page, struct writeback_control *wbc) {
+	printk("%s\n", __func__);
+
+	return -ENOMEM;
+}
+int sjfs_readpage(struct file *f, struct page *p) {
+	printk("%s\n", __func__);
+
+	return simple_readpage(f, p);
+}
+ssize_t sjfs_read(struct file *f, char __user *to, size_t count, loff_t *pos) {
+	printk("%s\n", __func__);
+
+	return -EFAULT;
+}
+ssize_t sjfs_write(struct file *f, const char __user *from, size_t count, loff_t *ppos) {
+	printk("%s\n", __func__);
+
+	return -EFAULT;
+}
+
 ssize_t sjfs_fops_read_iter(struct kiocb *iocb, struct iov_iter *iter) {
         struct file * file = iocb->ki_filp;
 
