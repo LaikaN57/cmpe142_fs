@@ -82,7 +82,7 @@ static superblock_t * sjfs_get_disk_superblock(void) {
 	unsigned char * block_zero_buffer;
 	superblock_t * disk_sb;
 
-	block_zero_buffer = kmalloc(sizeof(SJFS_BLOCK_SIZE), GFP_KERNEL);
+	block_zero_buffer = kmalloc(sizeof(SJFS_BLOCKSIZE), GFP_KERNEL);
 	if(!block_zero_buffer || sjfs_read_block(0, block_zero_buffer) < 0) {
 		return NULL;
 	}
@@ -99,7 +99,7 @@ static inode_t * sjfs_get_disk_inode(unsigned int inode_number) {
 	unsigned char * block_buffer;
 	inode_t * disk_inode;
 
-	block_buffer = kmalloc(SJFS_BLOCK_SIZE, GFP_KERNEL);
+	block_buffer = kmalloc(SJFS_BLOCKSIZE, GFP_KERNEL);
 	// block number is going to be:
 	// B0: super
 	// B1: inode bitmap
@@ -107,7 +107,7 @@ static inode_t * sjfs_get_disk_inode(unsigned int inode_number) {
 	// B3: inodes: BS/sizeof(inode_t) to (2*BS/sizeof(inode_t)) - 1
 	// Bn: inodes: ...
 	// B = 2 + floor((ino * size) / BS)
-	if(!block_buffer || sjfs_read_block(2 + ((inode_number * sizeof(inode_t)) / SJFS_BLOCK_SIZE), block_buffer) < 0) {
+	if(!block_buffer || sjfs_read_block(2 + ((inode_number * sizeof(inode_t)) / SJFS_BLOCKSIZE), block_buffer) < 0) {
 		return NULL;
 	}
         disk_inode = kmalloc(sizeof(inode_t), GFP_KERNEL);
@@ -117,14 +117,30 @@ static inode_t * sjfs_get_disk_inode(unsigned int inode_number) {
 }
 
 static void sjfs_set_disk_inode(struct inode * inode) {
-	// copy things from inode to disk inode in i_private
+	unsigned int block_number;
+	unsigned int block_offset
+	unsigned char * block_buffer;
+
+	
+	// TODO: copy things from inode to disk inode in i_private
 
 	inode->i_ctime = CURRENT_TIME;
 	((inode_t *) inode->i_private)->ctime = inode->i_ctime.tv_sec;
 
-	// read the block from disk
+	// read the block from diska
+	block_number = 2 + ((((inode_t) inode->i_private)->inode_number * sizeof(inode_t)) / SJFS_BLOCKSIZE);
+
+	block_buffer = kmalloc(SJFS_BLOCKSIZE, GFP_KERNEL);
+	if(!block_buffer || sjfs_read_block(block_number, block_buffer) < 0) {
+                return NULL;
+        }
+
 	// save the inode
+	block_offset = ((inode_t) inode->i_private)->inode_number % SJFS_BLOCKSIZE;
+	memcpy(block_buffer + block_offset, node->i_private, sizeof(inode_t);
+
 	// write the block to disk
+	sjfs_write_block(block_number, block_buffer);
 }
 
 // - fops functions -----------------------------------------------------------------------------------------
