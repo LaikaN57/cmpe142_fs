@@ -43,6 +43,21 @@
 #define CN_TEST_IDX             CN_NETLINK_USERS + 3
 #define CN_TEST_VAL             0x456
 
+struct cd_id
+{
+	uint32_t idx;
+	uint32_t val;
+};
+
+struct cn_msg
+{
+	struct cb_id id;
+
+	uint32_t seq;
+	uint32_t ack;
+	uint32_t len;
+};
+
 // TODO: SIGPIPE handler for socket?
 
 // used to kill the main while loop
@@ -116,24 +131,6 @@ static int netlink_send(int s, struct cn_msg *msg) {
 	char buf[2048];
 	struct cn_msg *m;
 
-	/* call was this
-	char buf[1024];
-	int len;
-	struct cn_msg *data;
-
-	memset(buf, 0, sizeof(buf));
-
-	data = (struct cn_msg *)buf;
-
-	data->id.idx = CN_TEST_IDX;
-	data->id.val = CN_TEST_VAL;
-	data->seq = seq++;
-	data->ack = 0;
-	data->len = 0;
-
-	len = netlink_send(s, data);
-	*/
-
 	// this was actually the ucon fuction part
 
 	size = NLMSG_SPACE(sizeof(struct cn_msg) + msg->len);
@@ -156,6 +153,12 @@ static int netlink_send(int s, struct cn_msg *msg) {
 }
 
 int do_work(unsigned char * buffer) {
+	FILE * diskFile;
+	char buf[1024];
+	int len;
+	struct cn_msg *data;
+	// address = 4 BYTES FOLLOWING OPCODE BYTE
+
 	// seek address
 	if(fseek(diskFile, address * BLOCK_SIZE, SEEK_SET) != 0) {
 		return -1;
@@ -165,11 +168,26 @@ int do_work(unsigned char * buffer) {
 	// the opcode is the firt byte in the buffer
 	switch(opcode) {
 		case OPCODE_READ:
-			// get data from disk
+			// get data from disk - GET FIRST BYTE FROM BUFFER
 			//netlink_send(s, block);
+
+			memset(buf, 0, sizeof(buf));
+
+			data = (struct cn_msg *)buf;
+
+			data->id.idx = CN_TEST_IDX;
+			data->id.val = CN_TEST_VAL;
+			data->seq = seq++;
+			data->ack = 0;
+			data->len = 0;
+
+			len = netlink_send(s, data);
 			break;
 		case OPCODE_WRITE:
 			// fwrite buffer to diskFile
+
+
+
 			break;
 		case OPCODE_NOTIFY:
 			printf("Info sjfs said: %s\n", buffer);
@@ -322,10 +340,11 @@ int main(int argc, char *argv[]) {
 			case NLMSG_DONE:
 				data = (struct cn_msg *)NLMSG_DATA(reply);
 
-				printf("[%x.%x] [%08u.%08u].\n", data->id.idx, data->id.val, data->seq, data->ack);
+				printf("Netlink message data: [%x.%x] [%08u.%08u].\n", data->id.idx, data->id.val, data->seq, data->ack);
 
 				// do something with data
-				// TODO: fix this call to only pass the payload
+				netlink_send(s, &data);				// DID: fix this call to only pass the payload
+
 				if(do_work(data) < 0) {
 					printf("Warn failed to do_work.");
 				}
