@@ -36,7 +36,7 @@ static int sjfs_read_block(unsigned int address, unsigned char * block) {
 	struct cn_msg *m;
 	unsigned char data[5];
 
-	// TODO:fix this to actually do what is is supposed to
+	// TODO: fix this to actually do what is is supposed to
 	m = kzalloc(sizeof(*m) + 5, GFP_ATOMIC);
 	if (m) {
 		memcpy(&m->id, &cn_id, sizeof(m->id));
@@ -196,26 +196,81 @@ struct dentry * sjfs_iops_lookup(struct inode *dir, struct dentry *dentry, unsig
         return simple_lookup(dir, dentry, flags);
 }
 int sjfs_iops_create(struct inode *dir, struct dentry *dentry, umode_t mode, bool excl) {
-        printk("sjfs_iops_create\n");
+	struct inode * inode = new_inode(dir->i_sb);
+	int error = -ENOSPC;
+	struct timespec time;
+	int i, j;
+	int inode_number = 0;
 
-        return 0;
+	printk("sjfs_iops_create\n");
+
+	if (inode) {
+		// get next free inode number
+		for(i = 0; i < sizeof(SJFS_BLOCKSIZE) || inode_number > 0; i++) {
+			for(j = 0; j < 8; j++) {
+				if(!((inodes_bitmaps_cache[i] >> j) & 1)) {
+					inode_number = (8 * i) + j;
+					break;
+				}
+			}
+		}
+		
+		// no inode was free
+		if(!inode_number) {
+			return error;
+		}
+
+		inode->i_ino = inode_number;
+		inode_init_owner(inode, dir, S_IFREG);
+		inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
+		inode->i_private = kzalloc(SJFS_INODE_SIZE, GFP_KERNEL);
+		// TODO: copy in mem inode to disk inode cache
+
+		sjfs_set_disk_inode(inode);
+
+		// set the inode bitmap bit
+		inode_bit = inode->i_ino % 8;
+		inode_byte = inode->i_ino - inode_bit;
+		inodes_bitmaps_cache[inode_byte] |= (1 << inode_bit);
+		sjfs_write_block(1, inodes_bitmaps_cache);
+
+		inode->i_op = &sjfs_file_iops;
+		inode->i_fop = &sjfs_file_fops;
+
+		d_instantiate(dentry, inode);
+		dget(dentry);	/* Extra count - pin the dentry in core */
+		error = 0;
+
+		// update ctime / mtime on dir
+		if(dir->i_op->update_time) {
+			time = CURRENT_TIME;
+			dir->i_op->update_time(dir, &time, S_CTIME | S_MTIME);
+		}
+	}
+
+	return error;
 }
 int sjfs_iops_unlink(struct inode *dir, struct dentry *dentry) {
 	int inode_byte;
 	int inode_bit;
-	struct inode * inode	= d_inode(dentry);
+	struct inode * inode = d_inode(dentry);
 	struct timespec time;
         printk("sjfs_iops_unlink\n");
 
-	// set the inode bitmap bit to 0
+	// clear the inode bitmap bit
 	inode_bit = inode->i_ino % 8;
 	inode_byte = inode->i_ino - inode_bit;
 	inodes_bitmaps_cache[inode_byte] &= ~(1 << inode_bit);
 	sjfs_write_block(1, inodes_bitmaps_cache);
 
 	// update ctime / mtime on dir
-	time = CURRENT_TIME;
-	dir->i_op->update_time(dir, &time, S_CTIME | S_ATIME);
+	if(dir->i_op->update_time) {
+		time = CURRENT_TIME;
+		dir->i_op->update_time(dir, &time, S_CTIME | S_ATIME);
+	}
+
+	// kill our inode cache
+	kfree(inode->i_private);
 
         return simple_unlink(dir, dentry);
 }
