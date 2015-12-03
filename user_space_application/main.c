@@ -96,7 +96,7 @@ int format(char * filename, int size) {
 		goto out;
 	}
 	for(i = BLOCK_SIZE; i < size; i += BLOCK_SIZE) {
-		byres = fwrite(zeroBlock, sizeof(unsigned char), sizeof(zeroBlock), diskFile);
+		bytes = fwrite(zeroBlock, sizeof(unsigned char), sizeof(zeroBlock), diskFile);
 	}
 
 	// closes the file and errors out because we are just going to open this file again in a bit

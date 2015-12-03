@@ -30,6 +30,8 @@ static struct semaphore cn_sem;
 static struct semaphore cb_sem;
 
 // use for block reads
-static unsigned char read_block_buffer[1024];
+static unsigned char read_block_buffer[SJFS_BLOCK_SIZE];
+static unsigned char * inodes_bitmap_cache;
+static unsigned char * datablocks_bitmap_cache;
 
 #endif
