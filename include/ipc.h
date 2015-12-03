@@ -7,9 +7,9 @@ typedef struct {
 	unsigned char * data;
 } sjfs_message;
 
-#define OPCODE_READ	0
-#define OPCODE_WRITE	1
-#define OPCODE_NOTIFY	2
+#define SJFS_OPCODE_READ	0
+#define SJFS_OPCODE_WRITE	1
+#define SJFS_OPCODE_NOTIFY	2
 
 #endif
 

@@ -22,7 +22,7 @@ void cn_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp) {
 	}
 
 	// copy message to read_block_buffer
-	memcpy(read_block_buffer, (unsigned char *) msg->data, msg->len > SJFS_BLOCK_SIZE ? SJFS_BLOCK_SIZE : msg->len);
+	memcpy(read_block_buffer, (unsigned char *) msg->data, msg->len > SJFS_BLOCKSIZE ? SJFS_BLOCKSIZE : msg->len);
 
 	up(&cb_sem);
 
@@ -60,7 +60,7 @@ static int sjfs_read_block(unsigned int address, unsigned char * block) {
 	up(&cb_sem); // imediate release of sem
 
 	// copy read_block_buffer to block
-	memcpy(block, read_block_buffer, SJFS_BLOCK_SIZE);
+	memcpy(block, read_block_buffer, SJFS_BLOCKSIZE);
 	up(&cn_sem);
 
 	return 0;
@@ -118,7 +118,7 @@ static inode_t * sjfs_get_disk_inode(unsigned int inode_number) {
 
 static void sjfs_set_disk_inode(struct inode * inode) {
 	unsigned int block_number;
-	unsigned int block_offset
+	unsigned int block_offset;
 	unsigned char * block_buffer;
 
 	
@@ -128,16 +128,16 @@ static void sjfs_set_disk_inode(struct inode * inode) {
 	((inode_t *) inode->i_private)->ctime = inode->i_ctime.tv_sec;
 
 	// read the block from diska
-	block_number = 2 + ((((inode_t) inode->i_private)->inode_number * sizeof(inode_t)) / SJFS_BLOCKSIZE);
+	block_number = 2 + ((inode->i_ino * sizeof(inode_t)) / SJFS_BLOCKSIZE);
 
 	block_buffer = kmalloc(SJFS_BLOCKSIZE, GFP_KERNEL);
 	if(!block_buffer || sjfs_read_block(block_number, block_buffer) < 0) {
-                return NULL;
+                return;
         }
 
 	// save the inode
-	block_offset = ((inode_t) inode->i_private)->inode_number % SJFS_BLOCKSIZE;
-	memcpy(block_buffer + block_offset, node->i_private, sizeof(inode_t);
+	block_offset = inode->i_ino % SJFS_BLOCKSIZE;
+	memcpy(block_buffer + block_offset, inode->i_private, sizeof(inode_t));
 
 	// write the block to disk
 	sjfs_write_block(block_number, block_buffer);
@@ -306,6 +306,7 @@ int sjfs_fill_super(struct super_block *sb, void *data, int silent) {
 	struct dentry *root;
 	superblock_t * disk_sb;
 	inode_t * disk_root_inode;
+	int i;
 
 	disk_sb = sjfs_get_disk_superblock();
 	if(!disk_sb) {
@@ -330,18 +331,18 @@ int sjfs_fill_super(struct super_block *sb, void *data, int silent) {
 	save_mount_options(sb, data); // for generic_show_options
 
 	// save the inodes bitmap to memory
-	inodes_bitmap_cache = kalloc(SJFS_BLOCKSIZE, GFP_KERNEL);
-	sjsfs_read_block(1, inodes_bitmap_cache); // for now we only have 1 inode bitmap to support 8k files
+	inodes_bitmaps_cache = kmalloc(SJFS_BLOCKSIZE, GFP_KERNEL);
+	sjfs_read_block(1, inodes_bitmaps_cache); // for now we only have 1 inode bitmap to support 8k files
 
 	// read each datablock bitmap into the datablocks bitmap cache
-	datablocks_bitmap_cache = kalloc(SJFS_BLOCKSIZE*data_blocks_count, GFP_KERNEL);
-	for(i = 2 + SJFS_BLOCKSIZE*8; i < (2 + SJFS_BLOCKSIZE*8) + data_blocks_count; i++) {
+	datablocks_bitmaps_cache = kmalloc(SJFS_BLOCKSIZE * disk_sb->datablock_blocks_count, GFP_KERNEL);
+	for(i = 2 + SJFS_BLOCKSIZE*8; i < (2 + SJFS_BLOCKSIZE*8) + disk_sb->datablock_blocks_count; i++) {
 		sjfs_read_block(i, datablocks_bitmaps_cache + (i - (2 + SJFS_BLOCKSIZE*8)) * SJFS_BLOCKSIZE);
 	}
 
 	// get and make our root inode
 	disk_root_inode = sjfs_get_disk_inode(0);
-	if(!disk_root_inode || !(*inodes_bitmap_cache >> 7)) {
+	if(!disk_root_inode || !(*inodes_bitmaps_cache >> 7)) {
 		return -ENOMEM;
 	}
 

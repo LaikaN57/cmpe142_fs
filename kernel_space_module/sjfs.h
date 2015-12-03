@@ -20,8 +20,11 @@
 #define SJFS_MAGIC	0x534A5346
 
 // netlink connector socket stuff
-static struct cb_id cn_id = { CN_NETLINK_USERS + 3, 0x456 };
-static char cn_name[] = "sjfs";
+static struct cb_id cn_id	= {
+		CN_NETLINK_USERS + 3,
+		0x456
+};
+static char cn_name[]		= "sjfs";
 static struct sock *nls;
 static u32 cn_counter;
 
@@ -30,8 +33,8 @@ static struct semaphore cn_sem;
 static struct semaphore cb_sem;
 
 // use for block reads
-static unsigned char read_block_buffer[SJFS_BLOCK_SIZE];
-static unsigned char * inodes_bitmap_cache;
-static unsigned char * datablocks_bitmap_cache;
+static unsigned char read_block_buffer[SJFS_BLOCKSIZE];
+static unsigned char * inodes_bitmaps_cache;
+static unsigned char * datablocks_bitmaps_cache;
 
 #endif
