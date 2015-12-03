@@ -13,7 +13,54 @@
 #include <linux/mm.h>
 #include <linux/module.h>
 
-#define SJFS_MAGIC	0x534A5346
+// kernel connector related
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/skbuff.h>
+#include <linux/slab.h>
+#include <linux/timer.h>
+
+#include <linux/connector.h>
+
+#define SJFS_MAGIC      0x534A5346
+
+MODULE_LICENSE("GPL");
+
+static struct cb_id cn_sjfs_id = {
+	CN_NETLINK_USERS + 3,
+	0x456
+};
+static char cn_sjfs_name[] = "cn_sjfs";
+static struct sock *nls;
+static unsigned int cn_sjfs_counter;
+
+static void cn_sjfs_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp) {
+	printk("%s: idx=%x, val=%x, seq=%u, ack=%u, len=%d: %s.\n",
+		__func__, msg->id.idx, msg->id.val, msg->seq, msg->ack,
+		msg->len, msg->len ? (char *)msg->data : "");
+}
+
+static void cn_sjfs_send_func(void) {
+	struct cn_msg *m;
+	char data[32];
+
+	printk("%s: timer fired\n", __func__);
+
+	m = kzalloc(sizeof(*m) + sizeof(data), GFP_ATOMIC);
+	if (m) {
+		memcpy(&m->id, &cn_sjfs_id, sizeof(m->id));
+		m->seq = cn_sjfs_counter;
+		m->len = scnprintf(data, sizeof(data), "counter = %u", cn_sjfs_counter) + 1;
+
+		memcpy(m + 1, data, m->len);
+
+		cn_netlink_send(m, 0, 0, GFP_ATOMIC);
+		kfree(m);
+	}
+
+	cn_sjfs_counter++;
+}
 
 static const struct inode_operations sjfs_dir_inode_operations;
 
@@ -32,11 +79,17 @@ static const struct inode_operations sjfs_file_inode_operations = {
 	.getattr	= simple_getattr,
 };
 
+static int sjfs_set_page_dirty_no_writeback(struct page *page) {
+	if (!PageDirty(page))
+		return !TestSetPageDirty(page);
+	return 0;
+}
+
 static const struct address_space_operations sjfs_aops = {
 	.readpage	= simple_readpage,
 	.write_begin	= simple_write_begin,
 	.write_end	= simple_write_end,
-	.set_page_dirty	= __set_page_dirty_no_writeback,
+	.set_page_dirty	= sjfs_set_page_dirty_no_writeback,
 };
 
 struct inode *sjfs_get_inode(struct super_block *sb, const struct inode *dir, umode_t mode, dev_t dev) {
@@ -180,16 +233,31 @@ static struct file_system_type sjfs_fs_type = {
 
 static int __init init_sjfs_fs(void) {
 	static unsigned long once;
+	int err;
 
 	if(test_and_set_bit(0, &once)) {
 		return 0;
 	}
 
+	err = cn_add_callback(&cn_sjfs_id, cn_sjfs_name, cn_sjfs_callback);
+	if (err)
+		goto err_out;
+
 	return register_filesystem(&sjfs_fs_type);
+
+err_out:
+	if (nls && nls->sk_socket)
+		sock_release(nls->sk_socket);
+
+	return err;
 }
 
 static void __exit exit_sjfs_fs(void) {
 	unregister_filesystem(&sjfs_fs_type);
+
+	cn_del_callback(&cn_sjfs_id);
+	if (nls && nls->sk_socket)
+		sock_release(nls->sk_socket);
 }
 
 module_init(init_sjfs_fs);
