@@ -23,9 +23,17 @@
 
 #include <linux/connector.h>
 
+// semaphore related
+#include <linux/semaphore.h>
+
+#include "ipc.h"
+
 #define SJFS_MAGIC      0x534A5346
 
 MODULE_LICENSE("GPL");
+
+static struct semaphore cn_sem;
+static struct semaphore cb_sem;
 
 static struct cb_id cn_sjfs_id = {
 	CN_NETLINK_USERS + 3,
@@ -35,40 +43,87 @@ static char cn_sjfs_name[] = "cn_sjfs";
 static struct sock *nls;
 static unsigned int cn_sjfs_counter;
 
+static unsigned char * sjfs_read_buffer;
+
 static void cn_sjfs_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp) {
-	printk("%s: idx=%x, val=%x, seq=%u, ack=%u, len=%d: %s.\n",
-		__func__, msg->id.idx, msg->id.val, msg->seq, msg->ack,
-		msg->len, msg->len ? (char *)msg->data : "");
+	sjfs_response_packet_t * packet;
+
+	// TODO add cb sem protection
+
+	packet = (sjfs_response_packet_t *) msg->data;
+
+	sjfs_read_buffer = kzalloc(packet->count, GFP_ATOMIC);
+	if(sjfs_read_buffer) {
+		memcpy(sjfs_read_buffer, packet->data, packet->count);
+	}
 }
 
-static void cn_sjfs_send_func(void) {
+static const struct inode_operations sjfs_dir_inode_operations;
+
+static ssize_t sjfs_fops_read(struct file *f, char __user *to, size_t count, loff_t *ppos) {
 	struct cn_msg *m;
-	char data[32];
+	sjfs_request_packet_t packet = {
+		SJFS_OPCODE_READ,
+		f->f_inode->i_ino,
+		*ppos,
+		count,
+	};
 
-	printk("%s: timer fired\n", __func__);
+	down(&cn_sem);
 
-	m = kzalloc(sizeof(*m) + sizeof(data), GFP_ATOMIC);
-	if (m) {
+	m = kzalloc(sizeof(*m) + sizeof(packet), GFP_ATOMIC);
+	if(m) {
 		memcpy(&m->id, &cn_sjfs_id, sizeof(m->id));
 		m->seq = cn_sjfs_counter;
-		m->len = scnprintf(data, sizeof(data), "counter = %u", cn_sjfs_counter) + 1;
-
-		memcpy(m + 1, data, m->len);
+		m->len = sizeof(packet);
+		memcpy(m + 1, &packet, m->len);
 
 		cn_netlink_send(m, 0, 0, GFP_ATOMIC);
 		kfree(m);
 	}
 
 	cn_sjfs_counter++;
-}
 
-static const struct inode_operations sjfs_dir_inode_operations;
+	// TODO: wait for response
 
-static ssize_t sjfs_fops_read(struct file *f, char __user *to, size_t count, loff_t *ppos) {
-	return simple_read_from_buffer(to, count, ppos, void *from, size_t available);
+	up(&cn_sem);
+
+	return count;
 }
 static ssize_t sjfs_fops_write(struct file *f, const char __user *from, size_t count, loff_t *ppos) {
-	return simple_write_to_buffer(void *to, size_t available, ppos, from, count);
+	struct cn_msg *m;
+	sjfs_request_packet_t packet = {
+		SJFS_OPCODE_WRITE,
+		f->f_inode->i_ino,
+		*ppos,
+		count,
+	};
+	unsigned char * data;
+	size_t res;
+
+	down(&cn_sem);
+
+	m = kzalloc(sizeof(*m) + sizeof(packet) + count, GFP_ATOMIC);
+	data = kzalloc(sizeof(packet) + count, GFP_ATOMIC);
+	if(m && data) {
+		memcpy(&m->id, &cn_sjfs_id, sizeof(m->id));
+		m->seq = cn_sjfs_counter;
+		m->len = sizeof(packet) + count;
+		memcpy(data, &packet, sizeof(packet));
+		res = copy_from_user(data + sizeof(packet), from, count);
+		if(res == count) {
+			memcpy(m + 1, data, m->len);
+
+			cn_netlink_send(m, 0, 0, GFP_ATOMIC);
+		}
+		kfree(m);
+	}
+
+	cn_sjfs_counter++;
+
+	up(&cn_sem);
+
+	return count;
 }
 
 static const struct file_operations sjfs_file_operations = {
@@ -248,6 +303,9 @@ static int __init init_sjfs_fs(void) {
 		return 0;
 	}
 
+	sema_init(&cn_sem, 1);
+	sema_init(&cb_sem, 1);
+
 	err = cn_add_callback(&cn_sjfs_id, cn_sjfs_name, cn_sjfs_callback);
 	if (err)
 		goto err_out;
@@ -267,6 +325,9 @@ static void __exit exit_sjfs_fs(void) {
 	cn_del_callback(&cn_sjfs_id);
 	if (nls && nls->sk_socket)
 		sock_release(nls->sk_socket);
+
+	kfree(&cb_sem);
+	kfree(&cn_sem);
 }
 
 module_init(init_sjfs_fs);
