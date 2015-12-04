@@ -20,6 +20,8 @@
 
 #include <linux/connector.h>
 
+#include "ipc.h"
+
 #define DEBUG
 #define NETLINK_CONNECTOR 	11
 
@@ -32,6 +34,7 @@
 #define ulog(f, a...) do {} while (0)
 #endif
 
+static int s;
 static int need_exit;
 static __u32 seq;
 
@@ -95,19 +98,19 @@ void do_work(unsigned char *buffer) {
 			msg->len = sizeof(struct cn_msg) + sizeof(sjfs_response_packet_t) + packet->count;
 
 			// insert the response packet
-			out_packet = (sjfs_response_packet_t *) calloc(sizeof(sjfs_response_packet_t));
+			out_packet = (sjfs_response_packet_t *) calloc(sizeof(sjfs_response_packet_t), 1);
 			out_packet->count = packet->count;
-			memccpy(msg + sizeof(struct cn_msg), out_packet, sizeof(sjfs_response_packet_t));
+			memcpy(msg + sizeof(struct cn_msg), out_packet, sizeof(sjfs_response_packet_t));
 
 			// insert the data
 			fread(msg + sizeof(struct cn_msg) + sizeof(sjfs_response_packet_t), sizeof(unsigned char), packet->count, fd);
 			
 			// send
-			len = netlink_send(s, msg);
+			netlink_send(s, msg);
 			break;
 		case SJFS_OPCODE_WRITE:
 			// write data to file
-			fwrite((const void *) packet->data, sizeof(unsigned char), packet->count, fd);
+			fwrite((const void *) packet + sizeof(sjfs_request_packet_t), sizeof(unsigned char), packet->count, fd);
 			break;
 		default:
 			fclose(fd);
@@ -119,7 +122,6 @@ void do_work(unsigned char *buffer) {
 }
 
 int main(int argc, char *argv[]) {
-	int s;
 	char buf[65536];
 	int len;
 	struct nlmsghdr *reply;

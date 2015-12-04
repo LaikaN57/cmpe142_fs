@@ -13,7 +13,7 @@ typedef struct {
 
 typedef struct {
 	long long count;
-	unsigned char data[0];
+	//unsigned char data[0];
 } sjfs_response_packet_t;
 
 #endif
