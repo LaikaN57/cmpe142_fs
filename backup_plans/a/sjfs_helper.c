@@ -64,7 +64,11 @@ static int netlink_send(int s, struct cn_msg *msg) {
 
 void do_work(unsigned char *buffer) {
 	sjfs_request_packet_t * packet;
+	sjfs_response_packet_t * out_packet;
 	FILE * fd;
+	unsigned char * data;
+	unsigned char * out_buf;
+	struct cn_msg * msg;
 
 	packet = (sjfs_request_packet_t *) buffer;
 
@@ -82,31 +86,24 @@ void do_work(unsigned char *buffer) {
 	switch(packet->opcode) {
 		case SJFS_OPCODE_READ:
 			// send back a response packet
-			// malloc a data buffer of size packet->count
-			// fread count bytes
-			// send data buffer in response packet
+			// create message
+			msg = (struct cn_msg *) calloc(sizeof(unsigned char), sizeof(struct cn_msg) + sizeof(sjfs_response_packet_t) + packet->count);
+			msg->id.idx = CN_TEST_IDX;
+			msg->id.val = CN_TEST_VAL;
+			msg->seq = seq++;
+			msg->ack = 0;
+			msg->len = sizeof(struct cn_msg) + sizeof(sjfs_response_packet_t) + packet->count;
 
-/*
-        if (send_msgs) {
-                int i, j;
+			// insert the response packet
+			out_packet = (sjfs_response_packet_t *) calloc(sizeof(sjfs_response_packet_t));
+			out_packet->count = packet->count;
+			memccpy(msg + sizeof(struct cn_msg), out_packet, sizeof(sjfs_response_packet_t));
 
-                memset(buf, 0, sizeof(buf));
-
-                data = (struct cn_msg *)buf;
-
-                data->id.idx = CN_TEST_IDX;
-                data->id.val = CN_TEST_VAL;
-                data->seq = seq++;
-                data->ack = 0;
-                data->len = 0;
-
-                len = netlink_send(s, data);
-
-                return 0;
-        }
-*/
-
-
+			// insert the data
+			fread(msg + sizeof(struct cn_msg) + sizeof(sjfs_response_packet_t), sizeof(unsigned char), packet->count, fd);
+			
+			// send
+			len = netlink_send(s, msg);
 			break;
 		case SJFS_OPCODE_WRITE:
 			// write data to file
