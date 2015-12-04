@@ -1,1 +1,0 @@
-cmd_/home/ubuntu/cmpe142_fs/backup_plans/a/sjfs.ko := ld -r -m elf_i386 -T ./scripts/module-common.lds --build-id  -o /home/ubuntu/cmpe142_fs/backup_plans/a/sjfs.ko /home/ubuntu/cmpe142_fs/backup_plans/a/sjfs.o /home/ubuntu/cmpe142_fs/backup_plans/a/sjfs.mod.o

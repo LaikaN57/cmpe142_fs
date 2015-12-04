@@ -93,7 +93,7 @@ static ssize_t sjfs_fops_read(struct file *f, char __user *to, size_t count, lof
 	down(&cb_sem);
 	up(&cb_sem);
 
-	// TODO: copy data to user
+	simple_write_to_buffer(to, count, *ppos, sjfs_read_buffer, count);
 
 	up(&cn_sem);
 

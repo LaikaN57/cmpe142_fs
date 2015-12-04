@@ -76,7 +76,7 @@ void do_work(unsigned char *buffer) {
 	packet = (sjfs_request_packet_t *) buffer;
 
 	// open file numbered packet->inode
-	fd = fopen("/dev/" + packet->inode, "wb");
+	fd = fopen("/tmp/" + packet->inode, "wb");
 	if(!fd) {
 		return;
 	}
