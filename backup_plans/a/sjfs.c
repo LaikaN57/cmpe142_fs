@@ -57,7 +57,7 @@ static void cn_sjfs_callback(struct cn_msg *msg, struct netlink_skb_parms *nsp) 
 
 	sjfs_read_buffer = kzalloc(packet->count, GFP_ATOMIC);
 	if(sjfs_read_buffer) {
-		memcpy(sjfs_read_buffer, packet->data, packet->count);
+		memcpy(sjfs_read_buffer, packet + 1, packet->count);
 	}
 
 	up(&cb_sem);
@@ -93,7 +93,7 @@ static ssize_t sjfs_fops_read(struct file *f, char __user *to, size_t count, lof
 	down(&cb_sem);
 	up(&cb_sem);
 
-	simple_write_to_buffer(to, count, *ppos, sjfs_read_buffer, count);
+	copy_to_user(to, sjfs_read_buffer, count);
 
 	up(&cn_sem);
 
