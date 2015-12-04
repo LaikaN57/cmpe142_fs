@@ -69,10 +69,15 @@ void do_work(unsigned char *buffer) {
 	packet = (sjfs_request_packet_t *) buffer;
 
 	// open file numbered packet->inode
-	// fopen();
+	fd = fopen("/dev/" + packet->inode, "wb");
+	if(!fd) {
+		return;
+	}
 
 	// seek file to pos
-	// fseek();
+	if(!fseek(fd, packet->count, SEEK_SET)) {
+		return;
+	}
 
 	switch(packet->opcode) {
 		case SJFS_OPCODE_READ:
@@ -105,14 +110,14 @@ void do_work(unsigned char *buffer) {
 			break;
 		case SJFS_OPCODE_WRITE:
 			// write data to file
-
+			fwrite((const void *) packet->data, sizeof(unsigned char), packet->count, fd);
 			break;
 		default:
-			//flose();
+			fclose(fd);
 			return;
 	}
 
-	//flose();
+	fclose(fd);
 	return;
 }
 
