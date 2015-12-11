@@ -1,2 +1,1 @@
-DECIPRICATED - Use ftrace.
-
+DEPRECATED - Use ftrace.
